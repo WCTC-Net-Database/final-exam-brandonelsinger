@@ -1,0 +1,152 @@
+using ConsoleRpg.Models;
+using ConsoleRpgEntities.Data;
+using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Rooms;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
+namespace ConsoleRpg.Services;
+
+/// <summary>
+/// Handles all player-related actions and interactions
+/// Separated from GameEngine to follow Single Responsibility Principle
+/// Returns ServiceResult objects to decouple from UI concerns
+/// </summary>
+public class PlayerService
+{
+    private readonly GameContext _context;
+    private readonly ILogger<PlayerService> _logger;
+
+    public PlayerService(GameContext context, ILogger<PlayerService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Move the player to a different room
+    /// </summary>
+    public ServiceResult<Room> MoveToRoom(Player player, Room currentRoom, int? roomId, string direction)
+    {
+        try
+        {
+            if (!roomId.HasValue)
+            {
+                return ServiceResult<Room>.Fail(
+                    $"[red]Cannot go {direction}[/]",
+                    $"[red]You cannot go {direction} from here - there is no exit in that direction.[/]");
+            }
+
+            var newRoom = _context.Rooms
+                .Include(r => r.Players)
+                .Include(r => r.Monsters)
+                .Include(r => r.NorthRoom)
+                .Include(r => r.SouthRoom)
+                .Include(r => r.EastRoom)
+                .Include(r => r.WestRoom)
+                .FirstOrDefault(r => r.Id == roomId.Value);
+
+            if (newRoom == null)
+            {
+                _logger.LogWarning("Attempted to move to non-existent room {RoomId}", roomId.Value);
+                return ServiceResult<Room>.Fail(
+                    $"[red]Room not found[/]",
+                    $"[red]Error: Room {roomId.Value} does not exist.[/]");
+            }
+
+            // Update player's room
+            player.RoomId = roomId.Value;
+            _context.SaveChanges();
+
+            _logger.LogInformation("Player {PlayerName} moved {Direction} to {RoomName}",
+                player.Name, direction, newRoom.Name);
+
+            return ServiceResult<Room>.Ok(
+                newRoom,
+                $"[green]→ {direction}[/]",
+                $"[green]You travel {direction} and arrive at {newRoom.Name}.[/]");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error moving player {PlayerName} to room {RoomId}", player.Name, roomId);
+            return ServiceResult<Room>.Fail(
+                "[red]Movement failed[/]",
+                $"[red]An error occurred while moving: {ex.Message}[/]");
+        }
+    }
+
+    /// <summary>
+    /// Show player character stats
+    /// </summary>
+    public ServiceResult ShowCharacterStats(Player player)
+    {
+        try
+        {
+            var output = $"[yellow]Character:[/] {player.Name}\n" +
+                        $"[green]Health:[/] {player.Health}\n" +
+                        $"[cyan]Experience:[/] {player.Experience}";
+
+            _logger.LogInformation("Displaying stats for player {PlayerName}", player.Name);
+
+            return ServiceResult.Ok(
+                "[cyan]Viewing stats[/]",
+                output);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error displaying stats for player {PlayerName}", player.Name);
+            return ServiceResult.Fail(
+                "[red]Error[/]",
+                $"[red]Failed to display stats: {ex.Message}[/]");
+        }
+    }
+
+    /// <summary>
+    /// Show player inventory and stats
+    /// </summary>
+    public ServiceResult ShowInventory(Player player)
+    {
+        try
+        {
+            var output = $"[magenta]Equipment:[/] {(player.Equipment != null ? "Equipped" : "None")}\n" +
+                        $"[blue]Abilities:[/] {player.Abilities?.Count ?? 0}";
+
+            _logger.LogInformation("Displaying inventory for player {PlayerName}", player.Name);
+
+            return ServiceResult.Ok(
+                "[magenta]Viewing inventory[/]",
+                output);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error displaying inventory for player {PlayerName}", player.Name);
+            return ServiceResult.Fail(
+                "[red]Error[/]",
+                $"[red]Failed to display inventory: {ex.Message}[/]");
+        }
+    }
+
+    /// <summary>
+    /// TODO: Implement monster attack logic
+    /// </summary>
+    public ServiceResult AttackMonster()
+    {
+        _logger.LogInformation("Attack monster feature called (not yet implemented)");
+        return ServiceResult.Ok(
+            "[yellow]Attack (TODO)[/]",
+            "[yellow]TODO: Implement attack logic - students will complete this feature.[/]");
+        // Students will implement this
+    }
+
+    /// <summary>
+    /// TODO: Implement ability usage logic
+    /// </summary>
+    public ServiceResult UseAbilityOnMonster()
+    {
+        _logger.LogInformation("Use ability feature called (not yet implemented)");
+        return ServiceResult.Ok(
+            "[yellow]Ability (TODO)[/]",
+            "[yellow]TODO: Implement ability usage - students will complete this feature.[/]");
+        // Students will implement this
+    }
+}
