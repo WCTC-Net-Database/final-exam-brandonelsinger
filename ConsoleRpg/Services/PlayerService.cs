@@ -1,9 +1,12 @@
 using ConsoleRpg.Models;
 using ConsoleRpgEntities.Data;
+using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Characters.Monsters;
 using ConsoleRpgEntities.Models.Rooms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Spectre.Console;
 
 namespace ConsoleRpg.Services;
 
@@ -131,11 +134,63 @@ public class PlayerService
     /// </summary>
     public ServiceResult AttackMonster()
     {
-        _logger.LogInformation("Attack monster feature called (not yet implemented)");
-        return ServiceResult.Ok(
-            "[yellow]Attack (TODO)[/]",
-            "[yellow]TODO: Implement attack logic - students will complete this feature.[/]");
-        // Students will implement this
+        try
+        {
+            var player = _context.Players
+                .Include(p => p.Room)
+                .ThenInclude(r => r.Monsters)
+                .Include(p => p.Equipment)
+                .ThenInclude(e => e.Weapon)
+                .FirstOrDefault(); 
+
+            if (player?.Room?.Monsters == null || !player.Room.Monsters.Any())
+            {
+                return ServiceResult.Fail("No monsters here!", "There are no monsters in this room to attack.");
+            }
+
+            var monster = player.Room.Monsters.First();
+            if (player.Room.Monsters.Count > 1)
+            {
+                monster = AnsiConsole.Prompt(
+                    new SelectionPrompt<Monster>()
+                        .Title("Select a [red]monster[/] to attack:")
+                        .AddChoices(player.Room.Monsters)
+                        .UseConverter(m => $"{m.Name} (HP: {m.Health})"));
+            }
+
+            var sb = new System.Text.StringBuilder();
+
+            int damage = player.Equipment?.Weapon?.Attack ?? 1;
+
+            monster.Health -= damage;
+
+            sb.AppendLine($"[yellow]Combat Log:[/]");
+            sb.AppendLine($"You attack [red]{monster.Name}[/] with {player.Equipment?.Weapon?.Name ?? "fists"}!");
+            sb.AppendLine($"Dealt [red]{damage}[/] damage.");
+
+            if (monster.Health <= 0)
+            {
+                sb.AppendLine($"[gold1]VICTORY![/] {monster.Name} has been defeated!");
+
+                player.Experience += 50;
+                sb.AppendLine($"You gained [cyan]50 XP[/].");
+
+                _context.Monsters.Remove(monster);
+            }
+            else
+            {
+                sb.AppendLine($"[red]{monster.Name}[/] has {monster.Health} HP remaining.");
+            }
+
+            _context.SaveChanges();
+
+            return ServiceResult.Ok("Attack successful", sb.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during attack");
+            return ServiceResult.Fail("Attack failed", $"Error: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -143,10 +198,75 @@ public class PlayerService
     /// </summary>
     public ServiceResult UseAbilityOnMonster()
     {
-        _logger.LogInformation("Use ability feature called (not yet implemented)");
-        return ServiceResult.Ok(
-            "[yellow]Ability (TODO)[/]",
-            "[yellow]TODO: Implement ability usage - students will complete this feature.[/]");
-        // Students will implement this
+        try
+        {
+            var player = _context.Players
+                .Include(p => p.Abilities)
+                .Include(p => p.Room)
+                .ThenInclude(r => r.Monsters)
+                .FirstOrDefault();
+
+            if (player == null || player.Room?.Monsters == null || !player.Room.Monsters.Any())
+            {
+                return ServiceResult.Fail("Cannot use ability", "There are no monsters here to target.");
+            }
+
+            if (!player.Abilities.Any())
+            {
+                return ServiceResult.Fail("No abilities", "You haven't learned any abilities yet!");
+            }
+
+            var ability = AnsiConsole.Prompt(
+                new SelectionPrompt<Ability>()
+                    .Title("Choose an [cyan]Ability[/]:")
+                    .AddChoices(player.Abilities)
+                    .UseConverter(a => $"{a.Name} ({a.AbilityType})"));
+
+            var monster = player.Room.Monsters.First();
+            if (player.Room.Monsters.Count > 1)
+            {
+                monster = AnsiConsole.Prompt(
+                    new SelectionPrompt<Monster>()
+                        .Title("Select a [red]target[/]:")
+                        .AddChoices(player.Room.Monsters)
+                        .UseConverter(m => $"{m.Name} (HP: {m.Health})"));
+            }
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"[yellow]Ability Log:[/]");
+            sb.AppendLine($"You used [cyan]{ability.Name}[/] on [red]{monster.Name}[/]!");
+
+            if (ability is ShoveAbility shove)
+            {
+                int damage = shove.Damage;
+                monster.Health -= damage;
+                sb.AppendLine($"[red]{monster.Name}[/] is shoved back {shove.Distance} feet! (Dealt {damage} dmg)");
+            }
+            else
+            {
+                int damage = 5;
+                monster.Health -= damage;
+                sb.AppendLine($"The ability hits [red]{monster.Name}[/] for {damage} damage.");
+            }
+
+            if (monster.Health <= 0)
+            {
+                sb.AppendLine($"[gold1]{monster.Name}[/] has been defeated!");
+                _context.Monsters.Remove(monster);
+            }
+            else
+            {
+                sb.AppendLine($"[red]{monster.Name}[/] has {monster.Health} HP remaining.");
+            }
+
+            _context.SaveChanges();
+
+            return ServiceResult.Ok($"Used {ability.Name}", sb.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error using ability");
+            return ServiceResult.Fail("Ability failed", $"Error: {ex.Message}");
+        }
     }
 }
