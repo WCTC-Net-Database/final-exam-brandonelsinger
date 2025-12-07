@@ -25,11 +25,17 @@ namespace ConsoleRpgEntities.Data
             // Optional: keep TPH discriminator mappings if you want explicit discriminator values
             modelBuilder.Entity<Monster>()
                 .HasDiscriminator<string>(m => m.MonsterType)
-                .HasValue<Goblin>("Goblin");
+                .HasValue<Goblin>("Goblin")
+                .HasValue<Beast>("Beast")
+                .HasValue<Undead>("Undead")   
+                .HasValue<Bandit>("Bandit");
 
             modelBuilder.Entity<Ability>()
                 .HasDiscriminator<string>(pa => pa.AbilityType)
-                .HasValue<ShoveAbility>("ShoveAbility");
+                .HasValue<ShoveAbility>("ShoveAbility")
+                .HasValue<FireballAbility>("FireballAbility")
+                .HasValue<HealAbility>("HealAbility")
+                .HasValue<CombatAbility>("CombatAbility");
 
             // Keep Player<->Ability join-table name if you must preserve existing schema
             modelBuilder.Entity<Player>()
@@ -84,6 +90,16 @@ namespace ConsoleRpgEntities.Data
 
             // Equipment -> Item relations (keep to avoid multiple cascade paths)
             ConfigureEquipmentRelationships(modelBuilder);
+
+            modelBuilder.Entity<Player>()
+                .HasOne(p => p.Inventory)
+                .WithOne(i => i.Player)
+                .HasForeignKey<Inventory>(i => i.PlayerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Inventory>()
+                .HasMany(i => i.Items)
+                .WithMany();
 
             base.OnModelCreating(modelBuilder);
         }

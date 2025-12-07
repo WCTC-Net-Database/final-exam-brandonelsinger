@@ -21,8 +21,13 @@ namespace ConsoleRpgEntities.Models.Characters.Monsters
         {
 
         }
+        public int ReceiveAttack(int damage)
+        {
+            Health -= damage;
+            return damage;
+        }
 
-        public abstract void Attack(ITargetable target);
+        public abstract string Attack(ITargetable target);
 
     }
 }

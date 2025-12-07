@@ -164,6 +164,31 @@ public class GameEngine
                 _explorationUI.AddOutput($"[red]Unknown action: {action}[/]");
                 break;
         }
+
+        _currentRoom = _context.Rooms
+            .Include(r => r.Monsters)
+            .FirstOrDefault(r => r.Id == _currentRoom.Id);
+
+        if (_currentRoom?.Monsters != null && _currentRoom.Monsters.Any())
+        {
+            foreach (var monster in _currentRoom.Monsters)
+            {
+                string attackMessage = monster.Attack(_currentPlayer);
+
+                _explorationUI.AddOutput($"[red]{attackMessage}[/]");
+            }
+
+            _context.SaveChanges();
+
+            if (_currentPlayer.Health <= 0)
+            {
+                AnsiConsole.Clear();
+                AnsiConsole.MarkupLine("[red bold]YOU HAVE DIED![/]");
+                AnsiConsole.MarkupLine("[dim]Game Over...[/]");
+
+                Environment.Exit(0);
+            }
+        }
     }
 
     /// <summary>

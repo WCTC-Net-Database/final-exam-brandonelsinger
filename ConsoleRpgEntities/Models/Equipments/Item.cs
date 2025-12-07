@@ -3,7 +3,6 @@
 namespace ConsoleRpgEntities.Models.Equipments;
 
 
-// TODO note this model has been updated from the previous version so a migration will be needed
 public class Item
 {
     public int Id { get; set; }

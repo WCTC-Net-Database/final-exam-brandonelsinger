@@ -16,6 +16,7 @@ namespace ConsoleRpgEntities.Models.Characters
         // Foreign keys
         public int? EquipmentId { get; set; }
         public int? RoomId { get; set; }
+        public virtual Inventory Inventory { get; set; }
 
         // Navigation properties
         public virtual Equipment Equipment { get; set; }
@@ -26,10 +27,18 @@ namespace ConsoleRpgEntities.Models.Characters
         {
             Abilities = new List<Ability>();
         }
+        public int ReceiveAttack(int damage)
+        {
+            int armor = Equipment?.Armor?.Defense ?? 0;
 
+            int actualDamage = Math.Max(0, damage - armor);
+
+            Health -= actualDamage;
+
+            return actualDamage;
+        }
         public void Attack(ITargetable target)
         {
-            // Player-specific attack logic
             Console.WriteLine($"{Name} attacks {target.Name} with a {Equipment.Weapon.Name} dealing {Equipment.Weapon.Attack} damage!");
             target.Health -= Equipment.Weapon.Attack;
             System.Console.WriteLine($"{target.Name} has {target.Health} health remaining.");

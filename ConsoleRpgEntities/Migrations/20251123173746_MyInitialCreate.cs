@@ -22,8 +22,8 @@ namespace ConsoleRpgEntities.Migrations
             migrationBuilder.AlterColumn<string>(
                 name: "AbilityType",
                 table: "Abilities",
-                type: "nvarchar(13)",
-                maxLength: 13,
+                type: "nvarchar(50)",
+                maxLength: 50,
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");

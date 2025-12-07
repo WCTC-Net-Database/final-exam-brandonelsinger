@@ -111,14 +111,30 @@ public class PlayerService
     {
         try
         {
-            var output = $"[magenta]Equipment:[/] {(player.Equipment != null ? "Equipped" : "None")}\n" +
-                        $"[blue]Abilities:[/] {player.Abilities?.Count ?? 0}";
+            var equipment = new System.Text.StringBuilder();
+            equipment.AppendLine("[magenta]--- Equipped ---[/]");
+            equipment.AppendLine($"Weapon: {(player.Equipment?.Weapon != null ? player.Equipment.Weapon.Name : "None")}");
+            equipment.AppendLine($"Armor:  {(player.Equipment?.Armor != null ? player.Equipment.Armor.Name : "None")}");
+
+            equipment.AppendLine("\n[blue]--- Backpack ---[/]");
+
+            if (player.Inventory?.Items != null && player.Inventory.Items.Any())
+            {
+                foreach (var item in player.Inventory.Items)
+                {
+                    equipment.AppendLine($"• {item.Name} ({item.Type}) - Wt: {item.Weight}");
+                }
+            }
+            else
+            {
+                equipment.AppendLine("[dim]Empty[/]");
+            }
 
             _logger.LogInformation("Displaying inventory for player {PlayerName}", player.Name);
 
             return ServiceResult.Ok(
-                "[magenta]Viewing inventory[/]",
-                output);
+                "[magenta]Inventory[/]",
+                equipment.ToString());
         }
         catch (Exception ex)
         {
@@ -236,18 +252,9 @@ public class PlayerService
             sb.AppendLine($"[yellow]Ability Log:[/]");
             sb.AppendLine($"You used [cyan]{ability.Name}[/] on [red]{monster.Name}[/]!");
 
-            if (ability is ShoveAbility shove)
-            {
-                int damage = shove.Damage;
-                monster.Health -= damage;
-                sb.AppendLine($"[red]{monster.Name}[/] is shoved back {shove.Distance} feet! (Dealt {damage} dmg)");
-            }
-            else
-            {
-                int damage = 5;
-                monster.Health -= damage;
-                sb.AppendLine($"The ability hits [red]{monster.Name}[/] for {damage} damage.");
-            }
+            ability.Activate(player, monster);
+
+            sb.AppendLine($"Action: [cyan]{ability.Name}[/] used on [red]{monster.Name}[/].");
 
             if (monster.Health <= 0)
             {

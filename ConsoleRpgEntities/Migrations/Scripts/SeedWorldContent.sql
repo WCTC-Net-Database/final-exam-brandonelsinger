@@ -28,35 +28,35 @@ END
 IF NOT EXISTS (SELECT 1 FROM Abilities WHERE Name = 'Fireball')
 BEGIN
     INSERT INTO Abilities (Name, AbilityType, Description, Distance, Damage)
-    VALUES ('Fireball', 'ShoveAbility', 'Hurl a ball of flame at your enemy', 10, 15);
+    VALUES ('Fireball', 'FireballAbility', 'Hurl a ball of flame at your enemy', 10, 20);
 END
 
 -- Heal Ability
 IF NOT EXISTS (SELECT 1 FROM Abilities WHERE Name = 'Heal')
 BEGIN
     INSERT INTO Abilities (Name, AbilityType, Description, Distance, Damage)
-    VALUES ('Heal', 'ShoveAbility', 'Restore health to yourself or an ally', 5, -10);
+    VALUES ('Heal', 'HealAbility', 'Restore health to yourself or an ally', 5, 15);
 END
 
 -- Stealth Strike
 IF NOT EXISTS (SELECT 1 FROM Abilities WHERE Name = 'Stealth Strike')
 BEGIN
     INSERT INTO Abilities (Name, AbilityType, Description, Distance, Damage)
-    VALUES ('Stealth Strike', 'ShoveAbility', 'Attack from the shadows with deadly precision', 3, 12);
+    VALUES ('Stealth Strike', 'CombatAbility', 'Attack from the shadows with deadly precision', 0, 15);
 END
 
 -- Power Attack
 IF NOT EXISTS (SELECT 1 FROM Abilities WHERE Name = 'Power Attack')
 BEGIN
     INSERT INTO Abilities (Name, AbilityType, Description, Distance, Damage)
-    VALUES ('Power Attack', 'ShoveAbility', 'A devastating melee attack', 2, 18);
+    VALUES ('Power Attack', 'CombatAbility', 'A devastating melee attack', 0, 10);
 END
 
 -- Shield Bash
 IF NOT EXISTS (SELECT 1 FROM Abilities WHERE Name = 'Shield Bash')
 BEGIN
     INSERT INTO Abilities (Name, AbilityType, Description, Distance, Damage)
-    VALUES ('Shield Bash', 'ShoveAbility', 'Stun your enemy with your shield', 2, 8);
+    VALUES ('Shield Bash', 'CombatAbility', 'Stun your enemy with your shield', 0, 5);
 END
 
 -- =============================================
@@ -291,24 +291,24 @@ VALUES ('Goblin Shaman', 35, 10, 'Goblin', @DeepForestId);
 
 -- Wolves near Forest Edge
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Gray Wolf', 45, 7, 'Goblin', @ForestEdgeId);
+VALUES ('Gray Wolf', 45, 7, 'Beast', @ForestEdgeId);
 
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Alpha Wolf', 60, 9, 'Goblin', @ForestEdgeId);
+VALUES ('Alpha Wolf', 60, 9, 'Beast', @ForestEdgeId);
 
 -- Skeleton in Ancient Library
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Ancient Skeleton', 50, 8, 'Goblin', @LibraryId);
+VALUES ('Ancient Skeleton', 50, 8, 'Undead', @LibraryId);
 
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Cursed Scholar', 40, 6, 'Goblin', @LibraryId);
+VALUES ('Cursed Scholar', 40, 6, 'Undead', @LibraryId);
 
 -- Bandits near Market
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Bandit Thug', 55, 7, 'Goblin', @EasternMarketId);
+VALUES ('Bandit Thug', 55, 7, 'Bandit', @EasternMarketId);
 
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Bandit Leader', 70, 10, 'Goblin', @EasternMarketId);
+VALUES ('Bandit Leader', 70, 10, 'Bandit', @EasternMarketId);
 
 -- Training Dummy (Low aggression for practice)
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
@@ -324,3 +324,20 @@ PRINT '- 7 Players created and placed in rooms';
 PRINT '- 15+ Ability assignments to players';
 PRINT '- 10 Monsters created and placed in rooms';
 PRINT '================================================';
+
+PRINT 'Updating Sir Lancelot to be playable...';
+
+DECLARE @WarriorGearId INT = (SELECT Id FROM Equipments WHERE WeaponId = (SELECT Id FROM Items WHERE Name = 'Steel Longsword'));
+DECLARE @TownId INT = (SELECT Id FROM Rooms WHERE Name = 'Town Square');
+DECLARE @FireballAbilityId INT = (SELECT Id FROM Abilities WHERE Name = 'Fireball');
+
+UPDATE Players
+SET EquipmentId = @WarriorGearId,
+    RoomId = @TownId
+WHERE Name = 'Sir Lancelot';
+
+IF NOT EXISTS (SELECT 1 FROM PlayerAbilities WHERE PlayersId = 1 AND AbilitiesId = @FireballAbilityId)
+BEGIN
+INSERT INTO PlayerAbilities (PlayersId, AbilitiesId)
+VALUES (1, @FireballAbilityId);
+END

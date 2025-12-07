@@ -338,7 +338,7 @@ public class AdminService
                 table.AddColumn("Name");
                 table.AddColumn("Type");
                 table.AddColumn("Description");
-                table.AddColumn("Stats"); 
+                table.AddColumn("Stats");
 
                 foreach (var ability in player.Abilities)
                 {
@@ -347,6 +347,18 @@ public class AdminService
                     if (ability is ShoveAbility shove)
                     {
                         stats = $"Dmg: {shove.Damage}, Dist: {shove.Distance}";
+                    }
+                    else if (ability is FireballAbility fireball)
+                    {
+                        stats = $"Dmg: {fireball.Damage}, Dist: {fireball.Distance}";
+                    }
+                    else if (ability is HealAbility heal)
+                    {
+                        stats = $"Heal: {Math.Abs(heal.Damage)}";
+                    }
+                    else if (ability is CombatAbility combat)
+                    {
+                        stats = $"Bonus Dmg: {combat.Damage}";
                     }
 
                     table.AddRow(
