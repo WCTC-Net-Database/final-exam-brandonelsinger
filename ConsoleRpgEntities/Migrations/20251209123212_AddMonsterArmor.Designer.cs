@@ -3,6 +3,7 @@ using ConsoleRpgEntities.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ConsoleRpgEntities.Migrations
 {
     [DbContext(typeof(GameContext))]
-    partial class GameContextModelSnapshot : ModelSnapshot
+    [Migration("20251209123212_AddMonsterArmor")]
+    partial class AddMonsterArmor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -92,9 +95,6 @@ namespace ConsoleRpgEntities.Migrations
                     b.Property<int>("Health")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LootItemId")
-                        .HasColumnType("int");
-
                     b.Property<string>("MonsterType")
                         .IsRequired()
                         .HasMaxLength(8)
@@ -108,8 +108,6 @@ namespace ConsoleRpgEntities.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("LootItemId");
 
                     b.HasIndex("RoomId");
 
@@ -135,12 +133,6 @@ namespace ConsoleRpgEntities.Migrations
                         .HasColumnType("int");
 
                     b.Property<int>("Health")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("int");
-
-                    b.Property<int>("MaxHealth")
                         .HasColumnType("int");
 
                     b.Property<string>("Name")
@@ -219,9 +211,6 @@ namespace ConsoleRpgEntities.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("RoomId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -233,8 +222,6 @@ namespace ConsoleRpgEntities.Migrations
                         .HasColumnType("decimal(5, 2)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("RoomId");
 
                     b.ToTable("Items");
                 });
@@ -377,16 +364,10 @@ namespace ConsoleRpgEntities.Migrations
 
             modelBuilder.Entity("ConsoleRpgEntities.Models.Characters.Monsters.Monster", b =>
                 {
-                    b.HasOne("ConsoleRpgEntities.Models.Equipments.Item", "LootItem")
-                        .WithMany()
-                        .HasForeignKey("LootItemId");
-
                     b.HasOne("ConsoleRpgEntities.Models.Rooms.Room", "Room")
                         .WithMany("Monsters")
                         .HasForeignKey("RoomId")
                         .OnDelete(DeleteBehavior.Restrict);
-
-                    b.Navigation("LootItem");
 
                     b.Navigation("Room");
                 });
@@ -431,13 +412,6 @@ namespace ConsoleRpgEntities.Migrations
                         .IsRequired();
 
                     b.Navigation("Player");
-                });
-
-            modelBuilder.Entity("ConsoleRpgEntities.Models.Equipments.Item", b =>
-                {
-                    b.HasOne("ConsoleRpgEntities.Models.Rooms.Room", null)
-                        .WithMany("Items")
-                        .HasForeignKey("RoomId");
                 });
 
             modelBuilder.Entity("ConsoleRpgEntities.Models.Rooms.Room", b =>
@@ -494,8 +468,6 @@ namespace ConsoleRpgEntities.Migrations
 
             modelBuilder.Entity("ConsoleRpgEntities.Models.Rooms.Room", b =>
                 {
-                    b.Navigation("Items");
-
                     b.Navigation("Monsters");
 
                     b.Navigation("Players");

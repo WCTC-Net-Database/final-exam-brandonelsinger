@@ -284,10 +284,10 @@ INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
 VALUES ('Goblin Warrior', 40, 8, 'Goblin', @DeepForestId);
 
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Goblin Scout', 30, 6, 'Goblin', @DeepForestId);
+VALUES ('Goblin Scout', 30, 6, 'Goblin', @TrainingGroundsId);
 
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
-VALUES ('Goblin Shaman', 35, 10, 'Goblin', @DeepForestId);
+VALUES ('Goblin Shaman', 35, 10, 'Goblin', @EasternMarketId);
 
 -- Wolves near Forest Edge
 INSERT INTO Monsters (Name, Health, AggressionLevel, MonsterType, RoomId)
@@ -327,12 +327,12 @@ PRINT '================================================';
 
 PRINT 'Updating Sir Lancelot to be playable...';
 
-DECLARE @WarriorGearId INT = (SELECT Id FROM Equipments WHERE WeaponId = (SELECT Id FROM Items WHERE Name = 'Steel Longsword'));
+DECLARE @BeginnerGearId INT = (SELECT Id FROM Equipments WHERE WeaponId = (SELECT Id FROM Items WHERE Name = 'Rusty Sword'));
 DECLARE @TownId INT = (SELECT Id FROM Rooms WHERE Name = 'Town Square');
 DECLARE @FireballAbilityId INT = (SELECT Id FROM Abilities WHERE Name = 'Fireball');
 
 UPDATE Players
-SET EquipmentId = @WarriorGearId,
+SET EquipmentId = @BeginnerGearId,
     RoomId = @TownId
 WHERE Name = 'Sir Lancelot';
 
@@ -341,3 +341,12 @@ BEGIN
 INSERT INTO PlayerAbilities (PlayersId, AbilitiesId)
 VALUES (1, @FireballAbilityId);
 END
+
+IF NOT EXISTS (SELECT 1 FROM Items WHERE Name = 'Health Potion')
+BEGIN
+INSERT INTO Items (Name, Type, Attack, Defense, Weight, Value)
+VALUES ('Health Potion', 'Consumable', 0, 0, 0.5, 10);
+END
+
+DECLARE @PotionId INT = (SELECT Id FROM Items WHERE Name = 'Health Potion');
+DECLARE @SwordId INT = (SELECT Id FROM Items WHERE Name = 'Steel Longsword');

@@ -154,6 +154,9 @@ public class GameEngine
             case "Use Ability":
                 HandleActionResult(_playerService.UseAbilityOnMonster());
                 break;
+            case "Equip Item":
+                HandleActionResult(_playerService.EquipItem());
+                break;
             case "Return to Main Menu":
                 _currentMode = GameMode.Admin;
                 _explorationUI.AddMessage("[yellow]→ Admin Mode[/]");

@@ -1,5 +1,6 @@
 using ConsoleRpgEntities.Models.Characters;
 using ConsoleRpgEntities.Models.Characters.Monsters;
+using ConsoleRpgEntities.Models.Equipments;
 
 namespace ConsoleRpgEntities.Models.Rooms
 {
@@ -28,5 +29,12 @@ namespace ConsoleRpgEntities.Models.Rooms
         // Collections of entities in the room
         public virtual ICollection<Player> Players { get; set; }
         public virtual ICollection<Monster> Monsters { get; set; }
+
+        public virtual ICollection<Item> Items { get; set; }
+
+        public Room()
+        {
+            Items = new List<Item>();
+        }
     }
 }

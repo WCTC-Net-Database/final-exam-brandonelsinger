@@ -94,6 +94,6 @@ WHERE Id = @ForestEdgeId;
 IF EXISTS (SELECT 1 FROM Monsters WHERE MonsterType = 'Goblin')
 BEGIN
     UPDATE TOP(1) Monsters
-    SET RoomId = @DeepForestId
+    SET RoomId = @TrainingGroundsId
     WHERE MonsterType = 'Goblin' AND RoomId IS NULL;
 END

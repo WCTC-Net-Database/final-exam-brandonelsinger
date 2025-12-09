@@ -155,15 +155,19 @@ public class PlayerService
             var player = _context.Players
                 .Include(p => p.Room)
                 .ThenInclude(r => r.Monsters)
+                .ThenInclude(m => m.LootItem) 
                 .Include(p => p.Equipment)
                 .ThenInclude(e => e.Weapon)
-                .FirstOrDefault(); 
+                .Include(p => p.Inventory) 
+                .ThenInclude(i => i.Items)
+                .FirstOrDefault();
 
             if (player?.Room?.Monsters == null || !player.Room.Monsters.Any())
             {
                 return ServiceResult.Fail("No monsters here!", "There are no monsters in this room to attack.");
             }
 
+           
             var monster = player.Room.Monsters.First();
             if (player.Room.Monsters.Count > 1)
             {
@@ -176,20 +180,42 @@ public class PlayerService
 
             var sb = new System.Text.StringBuilder();
 
+          
             int damage = player.Equipment?.Weapon?.Attack ?? 1;
 
-            monster.Health -= damage;
+            int actualDamage = monster.ReceiveAttack(damage);
 
             sb.AppendLine($"[yellow]Combat Log:[/]");
             sb.AppendLine($"You attack [red]{monster.Name}[/] with {player.Equipment?.Weapon?.Name ?? "fists"}!");
-            sb.AppendLine($"Dealt [red]{damage}[/] damage.");
+            sb.AppendLine($"Dealt [red]{actualDamage}[/] damage. (Monster Armor absorbed {damage - actualDamage})");
 
+            
             if (monster.Health <= 0)
             {
                 sb.AppendLine($"[gold1]VICTORY![/] {monster.Name} has been defeated!");
 
-                player.Experience += 50;
-                sb.AppendLine($"You gained [cyan]50 XP[/].");
+               
+                string xpMessage = player.GainExperience(50);
+                sb.AppendLine(xpMessage);
+
+              
+                if (monster.LootItem != null)
+                {
+                    sb.AppendLine($"[gold1]LOOT DROP![/] The monster dropped: [cyan]{monster.LootItem.Name}[/]!");
+
+                   
+                    if (player.Inventory == null)
+                    {
+                        player.Inventory = new ConsoleRpgEntities.Models.Equipments.Inventory { PlayerId = player.Id };
+                        _context.Add(player.Inventory); 
+                    }
+
+                    
+                    player.Inventory.Items.Add(monster.LootItem);
+
+                   
+                    monster.LootItemId = null;
+                }
 
                 _context.Monsters.Remove(monster);
             }
@@ -274,6 +300,78 @@ public class PlayerService
         {
             _logger.LogError(ex, "Error using ability");
             return ServiceResult.Fail("Ability failed", $"Error: {ex.Message}");
+        }
+    }
+
+    public ServiceResult EquipItem()
+    {
+        try
+        {
+            var player = _context.Players
+                .Include(p => p.Inventory)
+                .ThenInclude(i => i.Items)
+                .Include(p => p.Equipment)
+                .ThenInclude(e => e.Weapon)
+                .Include(p => p.Equipment)
+                .ThenInclude(e => e.Armor)
+                .FirstOrDefault();
+
+            if (player?.Inventory?.Items == null || !player.Inventory.Items.Any())
+            {
+                return ServiceResult.Fail("Inventory empty", "You have no items to equip.");
+            }
+
+            var equippables = player.Inventory.Items
+                .Where(i => i.Type == "Weapon" || i.Type == "Armor")
+                .ToList();
+
+            if (!equippables.Any())
+            {
+                return ServiceResult.Fail("No gear", "You have items, but none of them are weapons or armor.");
+            }
+
+            var itemToEquip = AnsiConsole.Prompt(
+                new SelectionPrompt<ConsoleRpgEntities.Models.Equipments.Item>()
+                    .Title("Select an item to [green]Equip[/]:")
+                    .PageSize(10)
+                    .AddChoices(equippables)
+                    .UseConverter(i => $"{i.Name} ({i.Type}) - Power: {Math.Max(i.Attack, i.Defense)}"));
+
+            var sb = new System.Text.StringBuilder();
+
+            if (itemToEquip.Type == "Weapon")
+            {
+                if (player.Equipment.Weapon != null)
+                {
+                    player.Inventory.Items.Add(player.Equipment.Weapon);
+                    sb.AppendLine($"You put away your [dim]{player.Equipment.Weapon.Name}[/].");
+                }
+
+                player.Equipment.Weapon = itemToEquip;
+                sb.AppendLine($"You equipped [cyan bold]{itemToEquip.Name}[/]! (Attack: {itemToEquip.Attack})");
+            }
+            else if (itemToEquip.Type == "Armor")
+            {
+                if (player.Equipment.Armor != null)
+                {
+                    player.Inventory.Items.Add(player.Equipment.Armor);
+                    sb.AppendLine($"You took off your [dim]{player.Equipment.Armor.Name}[/].");
+                }
+
+                player.Equipment.Armor = itemToEquip;
+                sb.AppendLine($"You equipped [cyan bold]{itemToEquip.Name}[/]! (Defense: {itemToEquip.Defense})");
+            }
+
+            player.Inventory.Items.Remove(itemToEquip);
+
+            _context.SaveChanges();
+
+            return ServiceResult.Ok("Equipped Item", sb.ToString());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error equipping item");
+            return ServiceResult.Fail("Error", $"Could not equip item: {ex.Message}");
         }
     }
 }

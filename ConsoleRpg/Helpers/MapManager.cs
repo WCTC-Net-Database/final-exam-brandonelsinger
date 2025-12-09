@@ -476,6 +476,7 @@ namespace ConsoleRpg.Helpers
             // General actions
             actions.Add("View Character Stats");
             actions.Add("View Inventory");
+            actions.Add("Equip Item");
             actions.Add("View Map");
             actions.Add("Return to Main Menu");
 

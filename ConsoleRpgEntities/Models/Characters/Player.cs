@@ -12,6 +12,8 @@ namespace ConsoleRpgEntities.Models.Characters
         public string Name { get; set; }
         public int Experience { get; set; }
         public int Health { get; set; }
+        public int Level { get; set; } = 1;
+        public int MaxHealth { get; set; } = 100;
 
         // Foreign keys
         public int? EquipmentId { get; set; }
@@ -29,13 +31,33 @@ namespace ConsoleRpgEntities.Models.Characters
         }
         public int ReceiveAttack(int damage)
         {
-            int armor = Equipment?.Armor?.Defense ?? 0;
+            int defense = (Equipment?.Armor?.Defense ?? 0) + (Equipment?.Weapon?.Defense ?? 0);
 
-            int actualDamage = Math.Max(0, damage - armor);
+            int actualDamage = Math.Max(0, damage - defense);
 
             Health -= actualDamage;
 
             return actualDamage;
+        }
+
+        public string GainExperience(int amount)
+        {
+            Experience += amount;
+
+            int calculatedLevel = (Experience / 100) + 1;
+
+            if (calculatedLevel > Level)
+            {
+                Level = calculatedLevel;
+
+                
+                MaxHealth += 10; 
+                Health = MaxHealth; 
+
+                return $"[yellow bold]LEVEL UP![/] You are now Level {Level}! (Max HP increased to {MaxHealth})";
+            }
+
+            return $"Gained {amount} XP. ({Experience % 100}/100 to next level)";
         }
         public void Attack(ITargetable target)
         {
