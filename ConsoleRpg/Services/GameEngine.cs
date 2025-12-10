@@ -2,6 +2,7 @@ using ConsoleRpg.Helpers;
 using ConsoleRpg.Models;
 using ConsoleRpgEntities.Data;
 using ConsoleRpgEntities.Models.Characters;
+using ConsoleRpgEntities.Models.Characters.Monsters;
 using ConsoleRpgEntities.Models.Rooms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -130,8 +131,8 @@ public class GameEngine
     /// </summary>
     private void HandleExplorationAction(string action, bool hasMonsters)
     {
-        // Track whether the player took a combat action (monsters only counter-attack after combat)
-        bool playerTookCombatAction = false;
+        // Track the specific monster that was targeted (if any)
+        Monster targetedMonster = null;
 
         switch (action)
         {
@@ -165,15 +166,25 @@ public class GameEngine
                 _explorationUI.AddSeparator();
                 _explorationUI.AddOutput("[yellow bold]=== COMBAT ROUND ===[/]");
                 _explorationUI.AddOutput("");
-                HandleActionResult(_playerService.AttackMonster());
-                playerTookCombatAction = true;
+
+                // Capture the returned monster from the service
+                var attackResult = _playerService.AttackMonster();
+                HandleActionResult(attackResult);
+
+                if (attackResult.Success)
+                    targetedMonster = attackResult.Value;
                 break;
             case "Use Ability":
                 _explorationUI.AddSeparator();
                 _explorationUI.AddOutput("[cyan bold]=== ABILITY ACTIVATED ===[/]");
                 _explorationUI.AddOutput("");
-                HandleActionResult(_playerService.UseAbilityOnMonster());
-                playerTookCombatAction = true;
+
+                // Capture the returned monster from the service
+                var abilityResult = _playerService.UseAbilityOnMonster();
+                HandleActionResult(abilityResult);
+
+                if (abilityResult.Success)
+                    targetedMonster = abilityResult.Value;
                 break;
             case "Equip Item":
                 HandleActionResult(_playerService.EquipItem());
@@ -189,8 +200,8 @@ public class GameEngine
                 break;
         }
 
-        // Only trigger monster counter-attack if player took a COMBAT action
-        if (playerTookCombatAction)
+        // Only trigger monster counter-attack if a monster was actually targeted
+        if (targetedMonster != null)
         {
             // Reload current player to get updated health after player's attack
             _currentPlayer = _context.Players
@@ -201,23 +212,23 @@ public class GameEngine
             _explorationUI.ShowCombatSummary(_currentPlayer.Name, _currentPlayer.Health, _currentPlayer.MaxHealth);
             _explorationUI.AddSeparator();
 
-            // Reload current room to get fresh monster data
+            // Reload current room to get fresh monster data (and check if our target died)
             _currentRoom = _context.Rooms
                 .Include(r => r.Monsters)
                 .FirstOrDefault(r => r.Id == _currentRoom.Id);
 
-            // Check if there are still monsters alive in the room
-            if (_currentRoom?.Monsters != null && _currentRoom.Monsters.Any())
+            // Check if the SPECIFIC monster we targeted is still alive
+            var survivingMonster = _currentRoom?.Monsters?.FirstOrDefault(m => m.Id == targetedMonster.Id);
+
+            if (survivingMonster != null)
             {
                 _explorationUI.AddOutput("");
                 _explorationUI.AddOutput("[red bold]=== MONSTER COUNTER-ATTACK ===[/]");
                 _explorationUI.AddOutput("");
 
-                foreach (var monster in _currentRoom.Monsters)
-                {
-                    string attackMessage = monster.Attack(_currentPlayer);
-                    _explorationUI.AddOutput($"[red]{attackMessage}[/]");
-                }
+                // Only the surviving targeted monster attacks back
+                string attackMessage = survivingMonster.Attack(_currentPlayer);
+                _explorationUI.AddOutput($"[red]{attackMessage}[/]");
 
                 _context.SaveChanges();
 

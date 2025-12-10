@@ -176,7 +176,7 @@ public class PlayerService
     /// <summary>
     /// Attack a monster in the current room
     /// </summary>
-    public ServiceResult AttackMonster()
+    public ServiceResult<Monster> AttackMonster()
     {
         try
         {
@@ -192,9 +192,8 @@ public class PlayerService
 
             if (player?.Room?.Monsters == null || !player.Room.Monsters.Any())
             {
-                return ServiceResult.Fail("No monsters here!", "There are no monsters in this room to attack.");
+                return ServiceResult<Monster>.Fail("No monsters here!", "There are no monsters in this room to attack.");
             }
-
 
             var monster = player.Room.Monsters.First();
             if (player.Room.Monsters.Count > 1)
@@ -208,14 +207,11 @@ public class PlayerService
 
             var sb = new System.Text.StringBuilder();
 
-
             int damage = player.Equipment?.Weapon?.Attack ?? 1;
-
             int actualDamage = monster.ReceiveAttack(damage);
 
             sb.AppendLine($"You attack [red]{monster.Name}[/] with {player.Equipment?.Weapon?.Name ?? "fists"}!");
             sb.AppendLine($"Dealt [red]{actualDamage}[/] damage. (Monster Armor absorbed {damage - actualDamage})");
-
 
             if (monster.Health <= 0)
             {
@@ -223,11 +219,9 @@ public class PlayerService
                 sb.AppendLine($"[gold1 bold]*** VICTORY! ***[/]");
                 sb.AppendLine($"[gold1]{monster.Name} has been defeated![/]");
 
-
                 string xpMessage = player.GainExperience(50);
                 sb.AppendLine();
                 sb.AppendLine(xpMessage);
-
 
                 if (monster.LootItem != null)
                 {
@@ -235,17 +229,13 @@ public class PlayerService
                     sb.AppendLine($"[gold1 bold]*** LOOT DROP! ***[/]");
                     sb.AppendLine($"The monster dropped: [cyan]{monster.LootItem.Name}[/]!");
 
-
                     if (player.Inventory == null)
                     {
                         player.Inventory = new ConsoleRpgEntities.Models.Equipments.Inventory { PlayerId = player.Id };
                         _context.Add(player.Inventory);
                     }
 
-
                     player.Inventory.Items.Add(monster.LootItem);
-
-
                     monster.LootItemId = null;
                 }
 
@@ -258,19 +248,20 @@ public class PlayerService
 
             _context.SaveChanges();
 
-            return ServiceResult.Ok("Attack successful", sb.ToString());
+            // Return the specific monster that was targeted
+            return ServiceResult<Monster>.Ok(monster, "Attack successful", sb.ToString());
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during attack");
-            return ServiceResult.Fail("Attack failed", $"Error: {ex.Message}");
+            return ServiceResult<Monster>.Fail("Attack failed", $"Error: {ex.Message}");
         }
     }
 
     /// <summary>
     /// Use an ability on a monster
     /// </summary>
-    public ServiceResult UseAbilityOnMonster()
+    public ServiceResult<Monster> UseAbilityOnMonster()
     {
         try
         {
@@ -282,12 +273,12 @@ public class PlayerService
 
             if (player == null || player.Room?.Monsters == null || !player.Room.Monsters.Any())
             {
-                return ServiceResult.Fail("Cannot use ability", "There are no monsters here to target.");
+                return ServiceResult<Monster>.Fail("Cannot use ability", "There are no monsters here to target.");
             }
 
             if (!player.Abilities.Any())
             {
-                return ServiceResult.Fail("No abilities", "You haven't learned any abilities yet!");
+                return ServiceResult<Monster>.Fail("No abilities", "You haven't learned any abilities yet!");
             }
 
             var ability = AnsiConsole.Prompt(
@@ -325,12 +316,13 @@ public class PlayerService
 
             _context.SaveChanges();
 
-            return ServiceResult.Ok($"Used {ability.Name}", sb.ToString());
+            // Return the specific monster that was targeted
+            return ServiceResult<Monster>.Ok(monster, $"Used {ability.Name}", sb.ToString());
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error using ability");
-            return ServiceResult.Fail("Ability failed", $"Error: {ex.Message}");
+            return ServiceResult<Monster>.Fail("Ability failed", $"Error: {ex.Message}");
         }
     }
 
