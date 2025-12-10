@@ -64,10 +64,23 @@ public class PlayerService
             _logger.LogInformation("Player {PlayerName} moved {Direction} to {RoomName}",
                 player.Name, direction, newRoom.Name);
 
+            var detailedOutput = new System.Text.StringBuilder();
+            detailedOutput.AppendLine($"[cyan]You travel {direction.ToLower()}...[/]");
+            detailedOutput.AppendLine();
+            detailedOutput.AppendLine($"[yellow bold]>>> {newRoom.Name} <<<[/]");
+            detailedOutput.AppendLine($"[dim]{newRoom.Description}[/]");
+
+            // Warn about monsters if present
+            if (newRoom.Monsters != null && newRoom.Monsters.Any())
+            {
+                detailedOutput.AppendLine();
+                detailedOutput.AppendLine($"[red bold]⚠ Warning: {newRoom.Monsters.Count} hostile creature(s) detected![/]");
+            }
+
             return ServiceResult<Room>.Ok(
                 newRoom,
                 $"[green]→ {direction}[/]",
-                $"[green]You travel {direction} and arrive at {newRoom.Name}.[/]");
+                detailedOutput.ToString());
         }
         catch (Exception ex)
         {
@@ -85,15 +98,27 @@ public class PlayerService
     {
         try
         {
-            var output = $"[yellow]Character:[/] {player.Name}\n" +
-                        $"[green]Health:[/] {player.Health}\n" +
-                        $"[cyan]Experience:[/] {player.Experience}";
+            var output = new System.Text.StringBuilder();
+            output.AppendLine($"[yellow bold]=== Character Sheet ===[/]");
+            output.AppendLine();
+            output.AppendLine($"[cyan]Name:[/] {player.Name}");
+            output.AppendLine($"[green]Health:[/] {player.Health}/{player.MaxHealth} HP");
+            output.AppendLine($"[yellow]Level:[/] {player.Level}");
+            output.AppendLine($"[magenta]Experience:[/] {player.Experience} XP ({player.Experience % 100}/100 to next level)");
+
+            if (player.Equipment != null)
+            {
+                output.AppendLine();
+                output.AppendLine($"[yellow]Equipment:[/]");
+                output.AppendLine($"  Weapon: {player.Equipment.Weapon?.Name ?? "None"} (Attack: {player.Equipment.Weapon?.Attack ?? 0})");
+                output.AppendLine($"  Armor: {player.Equipment.Armor?.Name ?? "None"} (Defense: {player.Equipment.Armor?.Defense ?? 0})");
+            }
 
             _logger.LogInformation("Displaying stats for player {PlayerName}", player.Name);
 
             return ServiceResult.Ok(
                 "[cyan]Viewing stats[/]",
-                output);
+                output.ToString());
         }
         catch (Exception ex)
         {
@@ -112,11 +137,14 @@ public class PlayerService
         try
         {
             var equipment = new System.Text.StringBuilder();
+            equipment.AppendLine("[yellow bold]=== Inventory ===[/]");
+            equipment.AppendLine();
             equipment.AppendLine("[magenta]--- Equipped ---[/]");
             equipment.AppendLine($"Weapon: {(player.Equipment?.Weapon != null ? player.Equipment.Weapon.Name : "None")}");
             equipment.AppendLine($"Armor:  {(player.Equipment?.Armor != null ? player.Equipment.Armor.Name : "None")}");
 
-            equipment.AppendLine("\n[blue]--- Backpack ---[/]");
+            equipment.AppendLine();
+            equipment.AppendLine("[blue]--- Backpack ---[/]");
 
             if (player.Inventory?.Items != null && player.Inventory.Items.Any())
             {
@@ -146,7 +174,7 @@ public class PlayerService
     }
 
     /// <summary>
-    /// TODO: Implement monster attack logic
+    /// Attack a monster in the current room
     /// </summary>
     public ServiceResult AttackMonster()
     {
@@ -155,10 +183,10 @@ public class PlayerService
             var player = _context.Players
                 .Include(p => p.Room)
                 .ThenInclude(r => r.Monsters)
-                .ThenInclude(m => m.LootItem) 
+                .ThenInclude(m => m.LootItem)
                 .Include(p => p.Equipment)
                 .ThenInclude(e => e.Weapon)
-                .Include(p => p.Inventory) 
+                .Include(p => p.Inventory)
                 .ThenInclude(i => i.Items)
                 .FirstOrDefault();
 
@@ -167,7 +195,7 @@ public class PlayerService
                 return ServiceResult.Fail("No monsters here!", "There are no monsters in this room to attack.");
             }
 
-           
+
             var monster = player.Room.Monsters.First();
             if (player.Room.Monsters.Count > 1)
             {
@@ -180,40 +208,44 @@ public class PlayerService
 
             var sb = new System.Text.StringBuilder();
 
-          
+
             int damage = player.Equipment?.Weapon?.Attack ?? 1;
 
             int actualDamage = monster.ReceiveAttack(damage);
 
-            sb.AppendLine($"[yellow]Combat Log:[/]");
             sb.AppendLine($"You attack [red]{monster.Name}[/] with {player.Equipment?.Weapon?.Name ?? "fists"}!");
             sb.AppendLine($"Dealt [red]{actualDamage}[/] damage. (Monster Armor absorbed {damage - actualDamage})");
 
-            
+
             if (monster.Health <= 0)
             {
-                sb.AppendLine($"[gold1]VICTORY![/] {monster.Name} has been defeated!");
+                sb.AppendLine();
+                sb.AppendLine($"[gold1 bold]*** VICTORY! ***[/]");
+                sb.AppendLine($"[gold1]{monster.Name} has been defeated![/]");
 
-               
+
                 string xpMessage = player.GainExperience(50);
+                sb.AppendLine();
                 sb.AppendLine(xpMessage);
 
-              
+
                 if (monster.LootItem != null)
                 {
-                    sb.AppendLine($"[gold1]LOOT DROP![/] The monster dropped: [cyan]{monster.LootItem.Name}[/]!");
+                    sb.AppendLine();
+                    sb.AppendLine($"[gold1 bold]*** LOOT DROP! ***[/]");
+                    sb.AppendLine($"The monster dropped: [cyan]{monster.LootItem.Name}[/]!");
 
-                   
+
                     if (player.Inventory == null)
                     {
                         player.Inventory = new ConsoleRpgEntities.Models.Equipments.Inventory { PlayerId = player.Id };
-                        _context.Add(player.Inventory); 
+                        _context.Add(player.Inventory);
                     }
 
-                    
+
                     player.Inventory.Items.Add(monster.LootItem);
 
-                   
+
                     monster.LootItemId = null;
                 }
 
@@ -221,7 +253,7 @@ public class PlayerService
             }
             else
             {
-                sb.AppendLine($"[red]{monster.Name}[/] has {monster.Health} HP remaining.");
+                sb.AppendLine($"[red]{monster.Name}[/] has [yellow]{monster.Health} HP[/] remaining.");
             }
 
             _context.SaveChanges();
@@ -236,7 +268,7 @@ public class PlayerService
     }
 
     /// <summary>
-    /// TODO: Implement ability usage logic
+    /// Use an ability on a monster
     /// </summary>
     public ServiceResult UseAbilityOnMonster()
     {
@@ -275,21 +307,21 @@ public class PlayerService
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"[yellow]Ability Log:[/]");
             sb.AppendLine($"You used [cyan]{ability.Name}[/] on [red]{monster.Name}[/]!");
+            sb.AppendLine();
 
             ability.Activate(player, monster);
 
-            sb.AppendLine($"Action: [cyan]{ability.Name}[/] used on [red]{monster.Name}[/].");
-
             if (monster.Health <= 0)
             {
+                sb.AppendLine();
+                sb.AppendLine($"[gold1 bold]*** VICTORY! ***[/]");
                 sb.AppendLine($"[gold1]{monster.Name}[/] has been defeated!");
                 _context.Monsters.Remove(monster);
             }
             else
             {
-                sb.AppendLine($"[red]{monster.Name}[/] has {monster.Health} HP remaining.");
+                sb.AppendLine($"[red]{monster.Name}[/] has [yellow]{monster.Health} HP[/] remaining.");
             }
 
             _context.SaveChanges();
@@ -303,6 +335,9 @@ public class PlayerService
         }
     }
 
+    /// <summary>
+    /// Equip an item from inventory
+    /// </summary>
     public ServiceResult EquipItem()
     {
         try

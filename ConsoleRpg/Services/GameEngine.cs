@@ -107,6 +107,12 @@ public class GameEngine
             .Include(r => r.WestRoom)
             .FirstOrDefault(r => r.Id == _currentRoom.Id);
 
+        // Reload player to get fresh health data
+        _currentPlayer = _context.Players
+            .Include(p => p.Equipment)
+            .Include(p => p.Abilities)
+            .FirstOrDefault(p => p.Id == _currentPlayer.Id);
+
         // Get all rooms for map
         var allRooms = _context.Rooms.ToList();
         bool hasMonsters = _currentRoom.Monsters != null && _currentRoom.Monsters.Any();
@@ -124,19 +130,26 @@ public class GameEngine
     /// </summary>
     private void HandleExplorationAction(string action, bool hasMonsters)
     {
+        // Track whether the player took a combat action (monsters only counter-attack after combat)
+        bool playerTookCombatAction = false;
+
         switch (action)
         {
             case "Go North":
-                HandleMoveResult(_playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.NorthRoomId, "North"));
+                var moveNorthResult = _playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.NorthRoomId, "North");
+                HandleMoveResult(moveNorthResult);
                 break;
             case "Go South":
-                HandleMoveResult(_playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.SouthRoomId, "South"));
+                var moveSouthResult = _playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.SouthRoomId, "South");
+                HandleMoveResult(moveSouthResult);
                 break;
             case "Go East":
-                HandleMoveResult(_playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.EastRoomId, "East"));
+                var moveEastResult = _playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.EastRoomId, "East");
+                HandleMoveResult(moveEastResult);
                 break;
             case "Go West":
-                HandleMoveResult(_playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.WestRoomId, "West"));
+                var moveWestResult = _playerService.MoveToRoom(_currentPlayer, _currentRoom, _currentRoom.WestRoomId, "West");
+                HandleMoveResult(moveWestResult);
                 break;
             case "View Map":
                 _explorationUI.AddMessage("[cyan]Viewing map[/]");
@@ -149,17 +162,25 @@ public class GameEngine
                 HandleActionResult(_playerService.ShowCharacterStats(_currentPlayer));
                 break;
             case "Attack Monster":
+                _explorationUI.AddSeparator();
+                _explorationUI.AddOutput("[yellow bold]=== COMBAT ROUND ===[/]");
+                _explorationUI.AddOutput("");
                 HandleActionResult(_playerService.AttackMonster());
+                playerTookCombatAction = true;
                 break;
             case "Use Ability":
+                _explorationUI.AddSeparator();
+                _explorationUI.AddOutput("[cyan bold]=== ABILITY ACTIVATED ===[/]");
+                _explorationUI.AddOutput("");
                 HandleActionResult(_playerService.UseAbilityOnMonster());
+                playerTookCombatAction = true;
                 break;
             case "Equip Item":
                 HandleActionResult(_playerService.EquipItem());
                 break;
             case "Return to Main Menu":
                 _currentMode = GameMode.Admin;
-                _explorationUI.AddMessage("[yellow]→ Admin Mode[/]");
+                _explorationUI.AddMessage("[yellow]-> Admin Mode[/]");
                 _explorationUI.AddOutput("[yellow]Switching to Admin Mode for database management and testing.[/]");
                 break;
             default:
@@ -168,28 +189,56 @@ public class GameEngine
                 break;
         }
 
-        _currentRoom = _context.Rooms
-            .Include(r => r.Monsters)
-            .FirstOrDefault(r => r.Id == _currentRoom.Id);
-
-        if (_currentRoom?.Monsters != null && _currentRoom.Monsters.Any())
+        // Only trigger monster counter-attack if player took a COMBAT action
+        if (playerTookCombatAction)
         {
-            foreach (var monster in _currentRoom.Monsters)
+            // Reload current player to get updated health after player's attack
+            _currentPlayer = _context.Players
+                .Include(p => p.Equipment)
+                .FirstOrDefault(p => p.Id == _currentPlayer.Id);
+
+            // Show player's health status after their action
+            _explorationUI.ShowCombatSummary(_currentPlayer.Name, _currentPlayer.Health, _currentPlayer.MaxHealth);
+            _explorationUI.AddSeparator();
+
+            // Reload current room to get fresh monster data
+            _currentRoom = _context.Rooms
+                .Include(r => r.Monsters)
+                .FirstOrDefault(r => r.Id == _currentRoom.Id);
+
+            // Check if there are still monsters alive in the room
+            if (_currentRoom?.Monsters != null && _currentRoom.Monsters.Any())
             {
-                string attackMessage = monster.Attack(_currentPlayer);
+                _explorationUI.AddOutput("");
+                _explorationUI.AddOutput("[red bold]=== MONSTER COUNTER-ATTACK ===[/]");
+                _explorationUI.AddOutput("");
 
-                _explorationUI.AddOutput($"[red]{attackMessage}[/]");
-            }
+                foreach (var monster in _currentRoom.Monsters)
+                {
+                    string attackMessage = monster.Attack(_currentPlayer);
+                    _explorationUI.AddOutput($"[red]{attackMessage}[/]");
+                }
 
-            _context.SaveChanges();
+                _context.SaveChanges();
 
-            if (_currentPlayer.Health <= 0)
-            {
-                AnsiConsole.Clear();
-                AnsiConsole.MarkupLine("[red bold]YOU HAVE DIED![/]");
-                AnsiConsole.MarkupLine("[dim]Game Over...[/]");
+                // Show player's health status after monster attacks
+                _explorationUI.ShowCombatSummary(_currentPlayer.Name, _currentPlayer.Health, _currentPlayer.MaxHealth);
 
-                Environment.Exit(0);
+                // Check if player died
+                if (_currentPlayer.Health <= 0)
+                {
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Clear();
+                    AnsiConsole.MarkupLine("[red bold]╔════════════════════════════════╗[/]");
+                    AnsiConsole.MarkupLine("[red bold]║      YOU HAVE DIED!            ║[/]");
+                    AnsiConsole.MarkupLine("[red bold]╚════════════════════════════════╝[/]");
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.MarkupLine("[dim]Your adventure has come to an end...[/]");
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Markup("[dim]Press any key to exit...[/]");
+                    Console.ReadKey(true);
+                    Environment.Exit(0);
+                }
             }
         }
     }

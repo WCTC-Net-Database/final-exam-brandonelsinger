@@ -1,4 +1,4 @@
-using ConsoleRpgEntities.Data;
+ï»¿using ConsoleRpgEntities.Data;
 using ConsoleRpgEntities.Models.Abilities.PlayerAbilities;
 using ConsoleRpgEntities.Models.Characters;
 using ConsoleRpgEntities.Models.Characters.Monsters;
@@ -44,8 +44,24 @@ public class AdminService
             {
                 Name = name,
                 Health = health,
+                MaxHealth = health,
                 Experience = experience
             };
+
+            // Allow user to assign the character to a room
+            var rooms = _context.Rooms.OrderBy(r => r.Name).ToList();
+            if (rooms.Any() && AnsiConsole.Confirm("Would you like to assign this character to a [green]room[/]?"))
+            {
+                var selectedRoom = AnsiConsole.Prompt(
+                    new SelectionPrompt<Room>()
+                        .Title("Select a [green]Room[/]:")
+                        .PageSize(10)
+                        .AddChoices(rooms)
+                        .UseConverter(r => r.Name));
+
+                player.RoomId = selectedRoom.Id;
+                AnsiConsole.MarkupLine($"[cyan]{name}[/] will start in [cyan]{selectedRoom.Name}[/].");
+            }
 
             _context.Players.Add(player);
             _context.SaveChanges();
@@ -477,6 +493,22 @@ public class AdminService
                 AnsiConsole.MarkupLine($"[green]Added[/] {monsterName} to the room.");
             }
 
+            // Option to move an existing character to this new room
+            var players = _context.Players.OrderBy(p => p.Name).ToList();
+            if (players.Any() && AnsiConsole.Confirm("Would you like to move an existing [cyan]Character[/] to this room?"))
+            {
+                var selectedPlayer = AnsiConsole.Prompt(
+                    new SelectionPrompt<Player>()
+                        .Title("Select a [cyan]Character[/] to move:")
+                        .PageSize(10)
+                        .AddChoices(players)
+                        .UseConverter(p => $"{p.Name} (Id: {p.Id})"));
+
+                selectedPlayer.RoomId = null; // Will be set after room is saved
+                newRoom.Players = new List<Player> { selectedPlayer };
+                AnsiConsole.MarkupLine($"[green]{selectedPlayer.Name}[/] will be moved to [cyan]{newRoom.Name}[/].");
+            }
+
             _context.Rooms.Add(newRoom);
             _context.SaveChanges();
 
@@ -541,7 +573,7 @@ public class AdminService
 
             grid.AddRow(new Rule($"[yellow]{roomDetails.Name}[/]").LeftJustified());
             grid.AddRow($"[dim]{roomDetails.Description}[/]");
-            grid.AddRow(""); 
+            grid.AddRow("");
 
             grid.AddRow(new Rule("[cyan]Exits[/]").LeftJustified());
             var exits = new List<string>();
@@ -562,7 +594,7 @@ public class AdminService
             if (roomDetails.Players.Any())
             {
                 grid.AddRow($"[cyan]Players:[/]");
-                foreach (var p in roomDetails.Players) grid.AddRow($"  • {p.Name} (HP: {p.Health})");
+                foreach (var p in roomDetails.Players) grid.AddRow($"  ï¿½ {p.Name} (HP: {p.Health})");
             }
             else
             {
@@ -572,7 +604,7 @@ public class AdminService
             if (roomDetails.Monsters.Any())
             {
                 grid.AddRow($"[red]Monsters:[/]");
-                foreach (var m in roomDetails.Monsters) grid.AddRow($"  • {m.Name} (HP: {m.Health}, Type: {m.MonsterType})");
+                foreach (var m in roomDetails.Monsters) grid.AddRow($"  ï¿½ {m.Name} (HP: {m.Health}, Type: {m.MonsterType})");
             }
             else
             {
@@ -641,7 +673,7 @@ public class AdminService
             switch (attribute)
             {
                 case "Level":
-                    query = query.Where(p => p.Experience > threshold);
+                    query = query.Where(p => p.Level > threshold);
                     break;
                 case "Health":
                     query = query.Where(p => p.Health > threshold);
@@ -661,7 +693,20 @@ public class AdminService
 
                 foreach (var p in results)
                 {
-                    var val = attribute == "Health" ? p.Health : p.Experience;
+                    int val;
+                    switch (attribute)
+                    {
+                        case "Level":
+                            val = p.Level;
+                            break;
+                        case "Health":
+                            val = p.Health;
+                            break;
+                        case "Experience":
+                        default:
+                            val = p.Experience;
+                            break;
+                    }
                     table.AddRow(p.Name, val.ToString());
                 }
                 AnsiConsole.Write(table);
@@ -700,7 +745,7 @@ public class AdminService
 
             var roomsWithPlayers = _context.Rooms
                 .Include(r => r.Players)
-                .Where(r => r.Players.Any()) 
+                .Where(r => r.Players.Any())
                 .OrderBy(r => r.Name)
                 .ToList();
 

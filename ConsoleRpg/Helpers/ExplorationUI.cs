@@ -1,4 +1,4 @@
-using ConsoleRpgEntities.Models.Rooms;
+﻿using ConsoleRpgEntities.Models.Rooms;
 using Spectre.Console;
 
 namespace ConsoleRpg.Helpers;
@@ -13,7 +13,7 @@ public class ExplorationUI
     private readonly List<string> _messageLog = new List<string>();
     private readonly List<string> _outputLog = new List<string>();
     private const int MaxMessages = 8;
-    private const int MaxOutputLines = 15;
+    private const int MaxOutputLines = 20;
 
     public ExplorationUI(MapManager mapManager)
     {
@@ -37,20 +37,37 @@ public class ExplorationUI
         // Render output log (if any)
         if (_outputLog.Any())
         {
-            foreach (var line in _outputLog)
-                AnsiConsole.MarkupLine(line);
-            _outputLog.Clear();
+            var outputPanel = new Panel(string.Join("\n", _outputLog))
+            {
+                Header = new PanelHeader("[yellow]Recent Events[/]"),
+                Border = BoxBorder.Rounded,
+                Padding = new Padding(1, 0, 1, 0)
+            };
+            AnsiConsole.Write(outputPanel);
+            AnsiConsole.WriteLine();
+
+            if (_outputLog.Count > MaxOutputLines)
+            {
+                int linesToRemove = _outputLog.Count - MaxOutputLines;
+                _outputLog.RemoveRange(0, linesToRemove);
+            }
         }
 
         // Get available actions
         var actions = _mapManager.GetAvailableActions(currentRoom);
 
         // Present actions as a numbered list below the panels
+        AnsiConsole.MarkupLine("[cyan bold]═══════════════════════════════════════[/]");
+        AnsiConsole.MarkupLine("[white bold]What will you do?[/]");
+        AnsiConsole.MarkupLine("[cyan bold]═══════════════════════════════════════[/]");
+
         for (int i = 0; i < actions.Count; i++)
         {
-            AnsiConsole.MarkupLine($"[cyan]{i + 1}[/]. {actions[i]}");
+            AnsiConsole.MarkupLine($"  [cyan]{i + 1}[/]. {actions[i]}");
         }
-        int choice = AnsiConsole.Ask<int>("[white]Enter the number of your action:[/]", 1);
+
+        AnsiConsole.WriteLine();
+        int choice = AnsiConsole.Ask<int>("[white]Enter your choice:[/]", 1);
 
         // Clamp choice to valid range
         if (choice < 1 || choice > actions.Count)
@@ -58,8 +75,6 @@ public class ExplorationUI
 
         return actions[choice - 1];
     }
-
-
 
     private Layout BuildLayout(IEnumerable<Room> allRooms, Room currentRoom)
     {
@@ -112,11 +127,56 @@ public class ExplorationUI
     {
         _outputLog.Add(output);
 
-        // Keep only the last N lines
         if (_outputLog.Count > MaxOutputLines)
         {
             _outputLog.RemoveAt(0);
         }
+    }
+
+    /// <summary>
+    /// Shows a pause screen after important events (like combat)
+    /// Allows player to read what happened before continuing
+    /// </summary>
+    public void PauseForReading(string message = "Press any key to continue...")
+    {
+        AnsiConsole.WriteLine();
+        AnsiConsole.Markup($"[dim italic]{message}[/]");
+        Console.ReadKey(true);
+    }
+
+    /// <summary>
+    /// Adds a visual separator to the output log
+    /// </summary>
+    public void AddSeparator()
+    {
+        _outputLog.Add("[dim]----------------------------------------[/]");
+    }
+
+    /// <summary>
+    /// Displays a combat summary with health status
+    /// </summary>
+    public void ShowCombatSummary(string playerName, int playerHealth, int playerMaxHealth)
+    {
+        var healthPercent = (double)playerHealth / playerMaxHealth * 100;
+        var healthColor = healthPercent > 70 ? "green" : healthPercent > 30 ? "yellow" : "red";
+
+        var healthBar = GenerateHealthBar(playerHealth, playerMaxHealth);
+
+        AddOutput("");
+        AddOutput($"[{healthColor} bold]{playerName}'s Status:[/] {Markup.Escape(healthBar)} [white]{playerHealth}/{playerMaxHealth} HP[/]");
+    }
+
+    /// <summary>
+    /// Generates a visual health bar using simple characters
+    /// </summary>
+    private string GenerateHealthBar(int current, int max)
+    {
+        const int barLength = 20;
+        int filled = (int)((double)current / max * barLength);
+        filled = Math.Max(0, Math.Min(barLength, filled));
+
+        var bar = "[" + new string('=', filled) + new string('-', barLength - filled) + "]";
+        return bar;
     }
 
     /// <summary>
@@ -167,5 +227,16 @@ public class ExplorationUI
     public void ClearOutput()
     {
         _outputLog.Clear();
+    }
+
+    /// <summary>
+    /// Displays a victory message
+    /// </summary>
+    public void ShowVictoryMessage(string monsterName)
+    {
+        AddOutput("");
+        AddOutput($"[gold1 bold]*** VICTORY! ***[/]");
+        AddOutput($"[gold1]{monsterName} has been defeated![/]");
+        AddOutput("");
     }
 }
