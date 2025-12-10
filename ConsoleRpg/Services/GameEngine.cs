@@ -153,8 +153,12 @@ public class GameEngine
                 HandleMoveResult(moveWestResult);
                 break;
             case "View Map":
-                _explorationUI.AddMessage("[cyan]Viewing map[/]");
-                _explorationUI.AddOutput("[cyan]The map is displayed above showing your current location and surroundings.[/]");
+                AnsiConsole.Clear();
+                _mapManager.DisplayMap(_context.Rooms.ToList(), _currentRoom);
+                _mapManager.DisplayRoomDetails(_currentRoom);
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine("[dim]Press any key to return to game...[/]");
+                Console.ReadKey(true);
                 break;
             case "View Inventory":
                 HandleActionResult(_playerService.ShowInventory(_currentPlayer));

@@ -353,10 +353,10 @@ namespace ConsoleRpg.Helpers
 
             // Display available exits
             var exits = new List<string>();
-            if (room.NorthRoom != null) exits.Add($"[cyan]North[/] → {room.NorthRoom.Name}");
-            if (room.SouthRoom != null) exits.Add($"[cyan]South[/] → {room.SouthRoom.Name}");
-            if (room.EastRoom != null) exits.Add($"[cyan]East[/] → {room.EastRoom.Name}");
-            if (room.WestRoom != null) exits.Add($"[cyan]West[/] → {room.WestRoom.Name}");
+            if (room.NorthRoom != null) exits.Add($"[cyan]North[/] - {room.NorthRoom.Name}");
+            if (room.SouthRoom != null) exits.Add($"[cyan]South[/] - {room.SouthRoom.Name}");
+            if (room.EastRoom != null) exits.Add($"[cyan]East[/] - {room.EastRoom.Name}");
+            if (room.WestRoom != null) exits.Add($"[cyan]West[/] - {room.WestRoom.Name}");
 
             if (exits.Any())
             {
@@ -402,12 +402,12 @@ namespace ConsoleRpg.Helpers
                 AnsiConsole.WriteLine();
             }
 
-            // Display other players in the room
+            // Display players in the room
             if (room.Players?.Any(p => p != null) == true)
             {
                 var playersTable = new Table();
                 playersTable.Border = TableBorder.Rounded;
-                playersTable.Title = new TableTitle("[cyan]Other Players in this room[/]");
+                playersTable.Title = new TableTitle("[cyan]Players in this room[/]");
                 playersTable.AddColumn("[yellow]Name[/]");
                 playersTable.AddColumn("[yellow]Health[/]");
                 playersTable.AddColumn("[yellow]Experience[/]");

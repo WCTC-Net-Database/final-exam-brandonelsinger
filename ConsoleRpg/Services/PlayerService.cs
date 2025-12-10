@@ -74,7 +74,7 @@ public class PlayerService
             if (newRoom.Monsters != null && newRoom.Monsters.Any())
             {
                 detailedOutput.AppendLine();
-                detailedOutput.AppendLine($"[red bold]⚠ Warning: {newRoom.Monsters.Count} hostile creature(s) detected![/]");
+                detailedOutput.AppendLine($"[red bold] Warning: {newRoom.Monsters.Count} hostile creature(s) detected![/]");
             }
 
             return ServiceResult<Room>.Ok(
@@ -150,7 +150,7 @@ public class PlayerService
             {
                 foreach (var item in player.Inventory.Items)
                 {
-                    equipment.AppendLine($"• {item.Name} ({item.Type}) - Wt: {item.Weight}");
+                    equipment.AppendLine($"- {item.Name} ({item.Type}) - Wt: {item.Weight}");
                 }
             }
             else
