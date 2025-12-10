@@ -176,7 +176,7 @@ public class PlayerService
     /// <summary>
     /// Attack a monster in the current room
     /// </summary>
-    public ServiceResult<Monster> AttackMonster()
+    public ServiceResult<Monster> AttackMonster(Player activePlayer)
     {
         try
         {
@@ -188,7 +188,7 @@ public class PlayerService
                 .ThenInclude(e => e.Weapon)
                 .Include(p => p.Inventory)
                 .ThenInclude(i => i.Items)
-                .FirstOrDefault();
+                .FirstOrDefault(p => p.Id == activePlayer.Id);
 
             if (player?.Room?.Monsters == null || !player.Room.Monsters.Any())
             {
@@ -261,7 +261,7 @@ public class PlayerService
     /// <summary>
     /// Use an ability on a monster
     /// </summary>
-    public ServiceResult<Monster> UseAbilityOnMonster()
+    public ServiceResult<Monster> UseAbilityOnMonster(Player activePlayer)
     {
         try
         {
@@ -272,7 +272,7 @@ public class PlayerService
                 .ThenInclude(m => m.LootItem)
                 .Include(p => p.Inventory)
                 .ThenInclude(i => i.Items)
-                .FirstOrDefault();
+                .FirstOrDefault(p => p.Id == activePlayer.Id);
 
             if (player == null || player.Room?.Monsters == null || !player.Room.Monsters.Any())
             {
@@ -352,7 +352,7 @@ public class PlayerService
     /// <summary>
     /// Equip an item from inventory
     /// </summary>
-    public ServiceResult EquipItem()
+    public ServiceResult EquipItem(Player activePlayer)
     {
         try
         {
@@ -363,7 +363,7 @@ public class PlayerService
                 .ThenInclude(e => e.Weapon)
                 .Include(p => p.Equipment)
                 .ThenInclude(e => e.Armor)
-                .FirstOrDefault();
+                .FirstOrDefault(p => p.Id == activePlayer.Id);
 
             if (player?.Inventory?.Items == null || !player.Inventory.Items.Any())
             {

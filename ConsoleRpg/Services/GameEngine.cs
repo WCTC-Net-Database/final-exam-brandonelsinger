@@ -172,7 +172,7 @@ public class GameEngine
                 _explorationUI.AddOutput("");
 
                 // Capture the returned monster from the service
-                var attackResult = _playerService.AttackMonster();
+                var attackResult = _playerService.AttackMonster(_currentPlayer);
                 HandleActionResult(attackResult);
 
                 if (attackResult.Success)
@@ -184,14 +184,14 @@ public class GameEngine
                 _explorationUI.AddOutput("");
 
                 // Capture the returned monster from the service
-                var abilityResult = _playerService.UseAbilityOnMonster();
+                var abilityResult = _playerService.UseAbilityOnMonster(_currentPlayer);
                 HandleActionResult(abilityResult);
 
                 if (abilityResult.Success)
                     targetedMonster = abilityResult.Value;
                 break;
             case "Equip Item":
-                HandleActionResult(_playerService.EquipItem());
+                HandleActionResult(_playerService.EquipItem(_currentPlayer));
                 break;
             case "Return to Main Menu":
                 _currentMode = GameMode.Admin;
