@@ -36,7 +36,7 @@ public class MenuManager
         _outputManager.WriteLine("");
         _outputManager.WriteLine("'A' LEVEL FEATURES:", ConsoleColor.Green);
         _outputManager.WriteLine("11. List Characters in Room by Attribute", ConsoleColor.Cyan);
-        _outputManager.WriteLine("12. List All Rooms with Characters", ConsoleColor.Cyan);
+        _outputManager.WriteLine("12. List All Rooms with Characters/Monsters", ConsoleColor.Cyan);
         _outputManager.WriteLine("13. Find Equipment Location", ConsoleColor.Cyan);
         _outputManager.WriteLine("");
         _outputManager.WriteLine("Select an option:", ConsoleColor.White);

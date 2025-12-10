@@ -598,7 +598,7 @@ public class AdminService
             if (roomDetails.Players.Any())
             {
                 grid.AddRow($"[cyan]Players:[/]");
-                foreach (var p in roomDetails.Players) grid.AddRow($"  � {p.Name} (HP: {p.Health})");
+                foreach (var p in roomDetails.Players) grid.AddRow($"  - {p.Name} (HP: {p.Health})");
             }
             else
             {
@@ -608,7 +608,7 @@ public class AdminService
             if (roomDetails.Monsters.Any())
             {
                 grid.AddRow($"[red]Monsters:[/]");
-                foreach (var m in roomDetails.Monsters) grid.AddRow($"  � {m.Name} (HP: {m.Health}, Type: {m.MonsterType})");
+                foreach (var m in roomDetails.Monsters) grid.AddRow($"  - {m.Name} (HP: {m.Health}, Type: {m.MonsterType})");
             }
             else
             {
@@ -747,27 +747,42 @@ public class AdminService
             _logger.LogInformation("User selected List All Rooms with Characters");
             AnsiConsole.MarkupLine("[yellow]=== World Population Report ===[/]");
 
-            var roomsWithPlayers = _context.Rooms
+            var populatedRooms = _context.Rooms
                 .Include(r => r.Players)
-                .Where(r => r.Players.Any())
+                .Include(r => r.Monsters)
+                .Where(r => r.Players.Any() || r.Monsters.Any())
                 .OrderBy(r => r.Name)
                 .ToList();
 
-            if (!roomsWithPlayers.Any())
+            if (!populatedRooms.Any())
             {
-                AnsiConsole.MarkupLine("[yellow]No rooms currently have players.[/]");
+                AnsiConsole.MarkupLine("[yellow]The world is completely empty![/]");
                 PressAnyKey();
                 return;
             }
 
             var tree = new Tree("[yellow]World Map[/]");
 
-            foreach (var room in roomsWithPlayers)
+            foreach (var room in populatedRooms)
             {
-                var roomNode = tree.AddNode($"[cyan]{room.Name}[/]");
-                foreach (var player in room.Players)
+                var roomNode = tree.AddNode($"[cyan bold]{room.Name}[/]");
+
+                if (room.Players.Any())
                 {
-                    roomNode.AddNode($"[green]{player.Name}[/] (HP: {player.Health})");
+                    var playersNode = roomNode.AddNode("[green]Players[/]");
+                    foreach (var player in room.Players)
+                    {
+                        playersNode.AddNode($"[green]{player.Name}[/]");
+                    }
+                }
+
+                if (room.Monsters.Any())
+                {
+                    var monstersNode = roomNode.AddNode("[red]Monsters[/]");
+                    foreach (var monster in room.Monsters)
+                    {
+                        monstersNode.AddNode($"[red]{monster.Name}[/] (HP: {monster.Health})");
+                    }
                 }
             }
 
