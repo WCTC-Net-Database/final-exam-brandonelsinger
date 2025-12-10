@@ -269,6 +269,9 @@ public class PlayerService
                 .Include(p => p.Abilities)
                 .Include(p => p.Room)
                 .ThenInclude(r => r.Monsters)
+                .ThenInclude(m => m.LootItem)
+                .Include(p => p.Inventory)
+                .ThenInclude(i => i.Items)
                 .FirstOrDefault();
 
             if (player == null || player.Room?.Monsters == null || !player.Room.Monsters.Any())
@@ -307,6 +310,23 @@ public class PlayerService
                 sb.AppendLine();
                 sb.AppendLine($"[gold1 bold]*** VICTORY! ***[/]");
                 sb.AppendLine($"[gold1]{monster.Name}[/] has been defeated!");
+
+                if (monster.LootItem != null)
+                {
+                    sb.AppendLine();
+                    sb.AppendLine($"[gold1 bold]*** LOOT DROP! ***[/]");
+                    sb.AppendLine($"The monster dropped: [cyan]{monster.LootItem.Name}[/]!");
+
+                    if (player.Inventory == null)
+                    {
+                        player.Inventory = new ConsoleRpgEntities.Models.Equipments.Inventory { PlayerId = player.Id };
+                        _context.Add(player.Inventory);
+                    }
+
+                    player.Inventory.Items.Add(monster.LootItem);
+                    monster.LootItemId = null;
+                }
+
                 _context.Monsters.Remove(monster);
             }
             else
@@ -316,7 +336,6 @@ public class PlayerService
 
             _context.SaveChanges();
 
-            // Return the specific monster that was targeted
             return ServiceResult<Monster>.Ok(monster, $"Used {ability.Name}", sb.ToString());
         }
         catch (Exception ex)
