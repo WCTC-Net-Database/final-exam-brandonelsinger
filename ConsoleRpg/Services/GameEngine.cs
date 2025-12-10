@@ -119,7 +119,7 @@ public class GameEngine
         bool hasMonsters = _currentRoom.Monsters != null && _currentRoom.Monsters.Any();
 
         // Render UI and get player's action choice
-        var selectedAction = _explorationUI.RenderAndGetAction(allRooms, _currentRoom);
+        var selectedAction = _explorationUI.RenderAndGetAction(allRooms, _currentRoom, _currentPlayer);
 
         // Handle the selected action
         HandleExplorationAction(selectedAction, hasMonsters);

@@ -1,4 +1,5 @@
 ﻿using ConsoleRpgEntities.Models.Rooms;
+using ConsoleRpgEntities.Models.Characters;
 using Spectre.Console;
 
 namespace ConsoleRpg.Helpers;
@@ -20,9 +21,12 @@ public class ExplorationUI
         _mapManager = mapManager;
     }
 
-    public string RenderAndGetAction(IEnumerable<Room> allRooms, Room currentRoom)
+    public string RenderAndGetAction(IEnumerable<Room> allRooms, Room currentRoom, Player activePlayer)
     {
         AnsiConsole.Clear();
+
+        AnsiConsole.Write(new Rule($"[blue]Playing as: [bold]{activePlayer.Name}[/] (Lvl {activePlayer.Level})[/]").LeftJustified());
+        AnsiConsole.WriteLine();
 
         // Render map panel
         var mapPanel = _mapManager.GetCompactMapPanel(allRooms, currentRoom);
