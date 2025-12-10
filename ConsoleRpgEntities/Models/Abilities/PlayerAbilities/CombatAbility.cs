@@ -24,7 +24,7 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
             int totalDamage = weaponDamage + Damage;
             int actualDamage = target.ReceiveAttack(totalDamage);
 
-            return $"[Skill] {user.Name} uses {Name} with their {weaponName}! A brutal strike dealing {actualDamage} physical damage!";
+            return $"{user.Name} uses {Name} with their {weaponName}! A brutal strike dealing {actualDamage} physical damage!";
         }
     }
 }

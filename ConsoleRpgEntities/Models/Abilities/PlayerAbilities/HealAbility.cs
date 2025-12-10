@@ -23,7 +23,7 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
                 target.Health += healAmount;
             }
 
-            return $"[Magic] {user.Name} casts a holy light. {target.Name} recovers {healAmount} HP!";
+            return $"{user.Name} casts a holy light. {target.Name} recovers {healAmount} HP!";
         }
     }
 }
