@@ -311,6 +311,10 @@ public class PlayerService
                 sb.AppendLine($"[gold1 bold]*** VICTORY! ***[/]");
                 sb.AppendLine($"[gold1]{monster.Name}[/] has been defeated!");
 
+                string xpMessage = player.GainExperience(50);
+                sb.AppendLine();
+                sb.AppendLine(xpMessage);
+
                 if (monster.LootItem != null)
                 {
                     sb.AppendLine();

@@ -565,7 +565,7 @@ public class AdminService
                 {
                     newMonster.Name = monsterName;
                     newMonster.Health = monsterHealth;
-                    newMonster.AggressionLevel = 1;
+                    newMonster.AggressionLevel = 10;
                     newMonster.MonsterType = monsterType;
                     newRoom.Monsters.Add(newMonster);
 
@@ -743,7 +743,7 @@ public class AdminService
                     .Title("Select attribute to filter by:")
                     .AddChoices("Level", "Health", "Experience"));
 
-            var threshold = AnsiConsole.Ask<int>($"Show characters with [cyan]{attribute}[/] greater than:");
+            var threshold = AnsiConsole.Ask<int>($"Show characters with [cyan]{attribute}[/] greater than or equal to:");
 
             var query = _context.Players
                 .Include(p => p.Room)
@@ -753,13 +753,13 @@ public class AdminService
             switch (attribute)
             {
                 case "Level":
-                    query = query.Where(p => p.Level > threshold);
+                    query = query.Where(p => p.Level >= threshold);
                     break;
                 case "Health":
-                    query = query.Where(p => p.Health > threshold);
+                    query = query.Where(p => p.Health >= threshold);
                     break;
                 case "Experience":
-                    query = query.Where(p => p.Experience > threshold);
+                    query = query.Where(p => p.Experience >= threshold);
                     break;
             }
 
@@ -848,7 +848,7 @@ public class AdminService
                     var playersNode = roomNode.AddNode("[green]Players[/]");
                     foreach (var player in room.Players)
                     {
-                        playersNode.AddNode($"[green]{player.Name}[/]");
+                        playersNode.AddNode($"[green]{player.Name}[/] (HP: {player.Health})");
                     }
                 }
 
