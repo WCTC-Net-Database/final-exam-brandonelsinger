@@ -198,6 +198,10 @@ public class GameEngine
                 _explorationUI.AddMessage("[yellow]-> Admin Mode[/]");
                 _explorationUI.AddOutput("[yellow]Switching to Admin Mode for database management and testing.[/]");
                 break;
+            case "Quit Game":
+                AnsiConsole.MarkupLine("[bold yellow]Thanks for playing! Goodbye.[/]");
+                Environment.Exit(0);
+                break;
             default:
                 _explorationUI.AddMessage($"[red]Unknown action[/]");
                 _explorationUI.AddOutput($"[red]Unknown action: {action}[/]");
@@ -315,6 +319,10 @@ public class GameEngine
                     AnsiConsole.MarkupLine($"[green]Switched control to {_currentPlayer.Name}![/]");
                 }
                 PressAnyKey();
+                break;
+            case "Q":
+                AnsiConsole.MarkupLine("[bold yellow]Thanks for playing! Goodbye.[/]");
+                Environment.Exit(0);
                 break;
 
             // Basic Features

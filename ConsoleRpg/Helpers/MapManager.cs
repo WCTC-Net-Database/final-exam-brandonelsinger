@@ -479,6 +479,7 @@ namespace ConsoleRpg.Helpers
             actions.Add("Equip Item");
             actions.Add("View Map");
             actions.Add("Return to Main Menu");
+            actions.Add("Quit Game");
 
             return actions;
         }
