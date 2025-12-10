@@ -150,6 +150,7 @@ public class AdminService
                 var table = new Table();
                 table.AddColumn("ID");
                 table.AddColumn("Name");
+                table.AddColumn("Level");
                 table.AddColumn("Health");
                 table.AddColumn("Experience");
                 table.AddColumn("Location");
@@ -159,6 +160,7 @@ public class AdminService
                     table.AddRow(
                         player.Id.ToString(),
                         player.Name,
+                        player.Level.ToString(),
                         player.Health.ToString(),
                         player.Experience.ToString(),
                         player.Room?.Name ?? "Unknown"
@@ -204,6 +206,7 @@ public class AdminService
                 var table = new Table();
                 table.AddColumn("ID");
                 table.AddColumn("Name");
+                table.AddColumn("Level");
                 table.AddColumn("Health");
                 table.AddColumn("Experience");
                 table.AddColumn("Location");
@@ -213,6 +216,7 @@ public class AdminService
                     table.AddRow(
                         player.Id.ToString(),
                         player.Name,
+                        player.Level.ToString(),
                         player.Health.ToString(),
                         player.Experience.ToString(),
                         player.Room?.Name ?? "Unknown"
