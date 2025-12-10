@@ -398,7 +398,7 @@ namespace ConsoleRpg.Helpers
             }
             else
             {
-                AnsiConsole.MarkupLine("[green]No monsters in this room.[/]");
+                AnsiConsole.MarkupLine("[red]No monsters in this room.[/]");
                 AnsiConsole.WriteLine();
             }
 

@@ -125,9 +125,16 @@ public class ExplorationUI
     /// </summary>
     public void AddOutput(string output)
     {
-        _outputLog.Add(output);
+        if (string.IsNullOrEmpty(output)) return;
 
-        if (_outputLog.Count > MaxOutputLines)
+        var lines = output.TrimEnd().Split(new[] { '\n', '\r' }, StringSplitOptions.None);
+
+        foreach (var line in lines)
+        {
+            _outputLog.Add(line);
+        }
+
+        while (_outputLog.Count > MaxOutputLines)
         {
             _outputLog.RemoveAt(0);
         }
