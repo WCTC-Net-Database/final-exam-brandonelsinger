@@ -67,15 +67,15 @@ namespace ConsoleRpgEntities.Models.Characters
 
         }
 
-        public void UseAbility(IAbility ability, ITargetable target)
+        public string UseAbility(IAbility ability, ITargetable target)
         {
             if (Abilities.Contains(ability))
             {
-                ability.Activate(this, target);
+                return ability.Activate(this, target);
             }
             else
             {
-                Console.WriteLine($"{Name} does not have the ability {ability.Name}!");
+                return $"{Name} does not have the ability {ability.Name}!";
             }
         }
     }

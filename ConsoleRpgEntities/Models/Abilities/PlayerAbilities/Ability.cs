@@ -18,6 +18,6 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
             Players = new List<Player>();
         }
 
-        public abstract void Activate(IPlayer user, ITargetable target);
+        public abstract string Activate(IPlayer user, ITargetable target);
     }
 }

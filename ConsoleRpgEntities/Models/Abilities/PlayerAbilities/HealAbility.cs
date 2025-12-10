@@ -10,10 +10,9 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
 {
     public class HealAbility : Ability
     {
-        public override void Activate(IPlayer user, ITargetable target)
+        public override string Activate(IPlayer user, ITargetable target)
         {
             int healAmount = Math.Abs(Damage);
-            Console.WriteLine($"[Magic] {user.Name} casts a holy light on {target.Name}.");
 
             if (target is Player p)
             {
@@ -24,7 +23,7 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
                 target.Health += healAmount;
             }
 
-            Console.WriteLine($"{target.Name} recovers {healAmount} HP!");
+            return $"[Magic] {user.Name} casts a holy light. {target.Name} recovers {healAmount} HP!";
         }
     }
 }

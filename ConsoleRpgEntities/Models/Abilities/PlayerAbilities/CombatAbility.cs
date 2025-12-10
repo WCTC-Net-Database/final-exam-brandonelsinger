@@ -10,7 +10,7 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
 {
     public class CombatAbility : Ability
     {
-        public override void Activate(IPlayer user, ITargetable target)
+        public override string Activate(IPlayer user, ITargetable target)
         {
             int weaponDamage = 0;
             string weaponName = "Fists";
@@ -22,13 +22,9 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
             }
 
             int totalDamage = weaponDamage + Damage;
-
-            Console.WriteLine($"[Skill] {user.Name} uses {Name} with their {weaponName}!");
-
             int actualDamage = target.ReceiveAttack(totalDamage);
 
-            Console.WriteLine($"A brutal strike dealing {actualDamage} physical damage!");
-
+            return $"[Skill] {user.Name} uses {Name} with their {weaponName}! A brutal strike dealing {actualDamage} physical damage!";
         }
     }
 }

@@ -10,13 +10,10 @@ namespace ConsoleRpgEntities.Models.Abilities.PlayerAbilities
 {
     public class FireballAbility : Ability
     {
-        public override void Activate(IPlayer user, ITargetable target)
+        public override string Activate(IPlayer user, ITargetable target)
         {
-            Console.WriteLine($"A massive fireball explodes on {target.Name}!");
-
             int actualDamage = target.ReceiveAttack(Damage);
-
-            Console.WriteLine($"{target.Name} takes {actualDamage} fire damage and is singed!");
+            return $"{user.Name} casts Fireball! {target.Name} takes {actualDamage} fire damage and is singed!";
         }
     }
 }

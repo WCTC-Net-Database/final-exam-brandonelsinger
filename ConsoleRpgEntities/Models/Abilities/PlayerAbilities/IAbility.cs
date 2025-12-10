@@ -9,5 +9,5 @@ public interface IAbility
     string Name { get; set; }
     ICollection<Player> Players { get; set; }
 
-    void Activate(IPlayer user, ITargetable target);
+    string Activate(IPlayer user, ITargetable target);
 }

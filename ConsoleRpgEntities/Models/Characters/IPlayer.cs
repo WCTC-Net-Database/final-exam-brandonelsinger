@@ -11,7 +11,7 @@ public interface IPlayer
     ICollection<Ability> Abilities { get; set; }
 
     void Attack(ITargetable target);
-    void UseAbility(IAbility ability, ITargetable target);
+    string UseAbility(IAbility ability, ITargetable target);
 
 
 }

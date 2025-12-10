@@ -307,10 +307,9 @@ public class PlayerService
             }
 
             var sb = new System.Text.StringBuilder();
-            sb.AppendLine($"You used [cyan]{ability.Name}[/] on [red]{monster.Name}[/]!");
-            sb.AppendLine();
 
-            ability.Activate(player, monster);
+            string combatLog = ability.Activate(player, monster);
+            sb.AppendLine(combatLog);
 
             if (monster.Health <= 0)
             {
