@@ -36,9 +36,26 @@ public class AdminService
             _logger.LogInformation("User selected Add Character");
             AnsiConsole.MarkupLine("[yellow]=== Add New Character ===[/]");
 
-            var name = AnsiConsole.Ask<string>("Enter character [green]name[/]:");
-            var health = AnsiConsole.Ask<int>("Enter [green]health[/]:");
-            var experience = AnsiConsole.Ask<int>("Enter [green]experience[/]:");
+            var name = AnsiConsole.Prompt(
+                new TextPrompt<string>("Enter character [green]name[/]:")
+                    .AllowEmpty()
+                    .Validate(n => !string.IsNullOrWhiteSpace(n)
+                        ? ValidationResult.Success()
+                        : ValidationResult.Error("[red]Name cannot be empty![/]")));
+
+            var health = AnsiConsole.Prompt(
+                new TextPrompt<int>("Enter [green]health[/]:")
+                    .AllowEmpty()
+                    .Validate(h => h > 0
+                        ? ValidationResult.Success()
+                        : ValidationResult.Error("[red]Health must be greater than 0![/]")));
+
+            var experience = AnsiConsole.Prompt(
+                new TextPrompt<int>("Enter [green]experience[/]:")
+                    .AllowEmpty()
+                    .Validate(e => e >= 0
+                        ? ValidationResult.Success()
+                        : ValidationResult.Error("[red]Experience cannot be negative![/]")));
 
             var player = new Player
             {
@@ -102,17 +119,32 @@ public class AdminService
 
             if (AnsiConsole.Confirm("Update name?"))
             {
-                player.Name = AnsiConsole.Ask<string>("Enter new [green]name[/]:");
+                player.Name = AnsiConsole.Prompt(
+                    new TextPrompt<string>("Enter new [green]name[/]:")
+                        .AllowEmpty()
+                        .Validate(n => !string.IsNullOrWhiteSpace(n)
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Name cannot be empty![/]")));
             }
 
             if (AnsiConsole.Confirm("Update health?"))
             {
-                player.Health = AnsiConsole.Ask<int>("Enter new [green]health[/]:");
+                player.Health = AnsiConsole.Prompt(
+                    new TextPrompt<int>("Enter new [green]health[/]:")
+                        .AllowEmpty()
+                        .Validate(h => h > 0
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Health must be greater than 0![/]")));
             }
 
             if (AnsiConsole.Confirm("Update experience?"))
             {
-                player.Experience = AnsiConsole.Ask<int>("Enter new [green]experience[/]:");
+                player.Experience = AnsiConsole.Prompt(
+                    new TextPrompt<int>("Enter new [green]experience[/]:")
+                        .AllowEmpty()
+                        .Validate(e => e >= 0
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Experience cannot be negative![/]")));
             }
 
             _context.SaveChanges();
@@ -421,8 +453,19 @@ public class AdminService
             _logger.LogInformation("User selected Add Room");
             AnsiConsole.MarkupLine("[yellow]=== Add New Room ===[/]");
 
-            var name = AnsiConsole.Ask<string>("Enter room [green]name[/]:");
-            var description = AnsiConsole.Ask<string>("Enter room [green]description[/]:");
+            var name = AnsiConsole.Prompt(
+                new TextPrompt<string>("Enter room [green]name[/]:")
+                    .AllowEmpty()
+                    .Validate(n => !string.IsNullOrWhiteSpace(n)
+                        ? ValidationResult.Success()
+                        : ValidationResult.Error("[red]Name cannot be empty![/]")));
+
+            var description = AnsiConsole.Prompt(
+                new TextPrompt<string>("Enter room [green]description[/]:")
+                    .AllowEmpty()
+                    .Validate(d => !string.IsNullOrWhiteSpace(d)
+                        ? ValidationResult.Success()
+                        : ValidationResult.Error("[red]Description cannot be empty![/]")));
 
             var existingRooms = _context.Rooms.ToList();
             var sourceRoom = AnsiConsole.Prompt(
@@ -481,20 +524,53 @@ public class AdminService
 
             if (AnsiConsole.Confirm("Would you like to add a [red]Monster[/] to this room?"))
             {
-                var monsterName = AnsiConsole.Ask<string>("Enter monster [green]name[/]:");
-                var monsterHealth = AnsiConsole.Ask<int>("Enter monster [green]health[/]:");
+                var monsterName = AnsiConsole.Prompt(
+                    new TextPrompt<string>("Enter monster [green]name[/]:")
+                        .AllowEmpty()
+                        .Validate(n => !string.IsNullOrWhiteSpace(n)
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Monster name cannot be empty![/]")));
 
-                var goblin = new Goblin
+                var monsterHealth = AnsiConsole.Prompt(
+                    new TextPrompt<int>("Enter monster [green]health[/]:")
+                        .AllowEmpty()
+                        .Validate(h => h > 0
+                            ? ValidationResult.Success()
+                            : ValidationResult.Error("[red]Health must be greater than 0![/]")));
+
+                var monsterType = AnsiConsole.Prompt(
+                    new SelectionPrompt<string>()
+                        .Title("Select [green]Monster Type[/]:")
+                        .AddChoices("Goblin", "Beast", "Undead", "Bandit"));
+
+                Monster newMonster = null;
+
+                switch (monsterType)
                 {
-                    Name = monsterName,
-                    Health = monsterHealth,
-                    AggressionLevel = 1,
-                    Sneakiness = 5,
-                    MonsterType = "Goblin"
-                };
+                    case "Goblin":
+                        newMonster = new Goblin { Sneakiness = 5 };
+                        break;
+                    case "Beast":
+                        newMonster = new Beast();
+                        break;
+                    case "Undead":
+                        newMonster = new Undead();
+                        break;
+                    case "Bandit":
+                        newMonster = new Bandit();
+                        break;
+                }
 
-                newRoom.Monsters.Add(goblin);
-                AnsiConsole.MarkupLine($"[green]Added[/] {monsterName} to the room.");
+                if (newMonster != null)
+                {
+                    newMonster.Name = monsterName;
+                    newMonster.Health = monsterHealth;
+                    newMonster.AggressionLevel = 1;
+                    newMonster.MonsterType = monsterType;
+                    newRoom.Monsters.Add(newMonster);
+
+                    AnsiConsole.MarkupLine($"[green]Added[/] {monsterType} '{monsterName}' to the room.");
+                }
             }
 
             // Option to move an existing character to this new room
