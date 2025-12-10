@@ -17,6 +17,7 @@ public class MenuManager
         _outputManager.WriteLine("=================================", ConsoleColor.Yellow);
         _outputManager.WriteLine("");
         _outputManager.WriteLine("E. Return to Exploration Mode", ConsoleColor.Yellow);
+        _outputManager.WriteLine("S. Switch Active Character", ConsoleColor.Yellow);
         _outputManager.WriteLine("");
         _outputManager.WriteLine("BASIC FEATURES:", ConsoleColor.Green);
         _outputManager.WriteLine("1. Add New Character", ConsoleColor.Cyan);

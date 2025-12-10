@@ -400,4 +400,37 @@ public class PlayerService
             return ServiceResult.Fail("Error", $"Could not equip item: {ex.Message}");
         }
     }
+
+    /// <summary>
+    /// Switches the active player character
+    /// </summary>
+    public Player SwitchCharacter()
+    {
+        var players = _context.Players.OrderBy(p => p.Name).ToList();
+
+        if (!players.Any())
+        {
+            AnsiConsole.MarkupLine("[red]No players found in database![/]");
+            return null;
+        }
+
+        var selectedPlayer = AnsiConsole.Prompt(
+            new SelectionPrompt<Player>()
+                .Title("Select a [green]Character[/] to play:")
+                .PageSize(10)
+                .AddChoices(players)
+                .UseConverter(p => $"{p.Name} (Lvl {p.Level})"));
+
+        // Re-load full player data
+        return _context.Players
+            .Include(p => p.Room)
+            .Include(p => p.Equipment)
+            .ThenInclude(e => e.Weapon)
+            .Include(p => p.Equipment)
+            .ThenInclude(e => e.Armor)
+            .Include(p => p.Inventory)
+            .ThenInclude(i => i.Items)
+            .Include(p => p.Abilities)
+            .FirstOrDefault(p => p.Id == selectedPlayer.Id);
+    }
 }

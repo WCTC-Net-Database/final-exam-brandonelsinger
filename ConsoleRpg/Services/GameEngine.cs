@@ -299,6 +299,20 @@ public class GameEngine
                 ExploreWorld();
                 break;
 
+            case "S":
+                var newPlayer = _playerService.SwitchCharacter();
+                if (newPlayer != null)
+                {
+                    _currentPlayer = newPlayer;
+                    // Update the current room to match the new player's location
+                    // If player has no room, fallback to the first room in DB (Safety check)
+                    _currentRoom = _currentPlayer.Room ?? _context.Rooms.FirstOrDefault();
+
+                    AnsiConsole.MarkupLine($"[green]Switched control to {_currentPlayer.Name}![/]");
+                }
+                PressAnyKey();
+                break;
+
             // Basic Features
             case "1":
                 _adminService.AddCharacter();
