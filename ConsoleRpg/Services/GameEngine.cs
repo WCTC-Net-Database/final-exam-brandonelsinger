@@ -229,9 +229,11 @@ public class GameEngine
             _currentPlayer = _context.Players
                 .Include(p => p.Equipment)
                 .FirstOrDefault(p => p.Id == _currentPlayer.Id);
-
-            // Show player's health status after their action
-            _explorationUI.ShowCombatSummary(_currentPlayer.Name, _currentPlayer.Health, _currentPlayer.MaxHealth);
+           
+            // Show MONSTER's health status after player's attack (more useful feedback)
+            // Estimate max health based on current health + typical damage dealt
+            int estimatedMaxHealth = Math.Max(targetedMonster.Health + 30, 50);
+            _explorationUI.ShowMonsterStatus(targetedMonster.Name, targetedMonster.Health, estimatedMaxHealth);
             _explorationUI.AddSeparator();
 
             // Reload current room to get fresh monster data (and check if our target died)

@@ -177,6 +177,36 @@ public class ExplorationUI
     }
 
     /// <summary>
+    /// Displays a monster's health status after being attacked.
+    /// Uses red color scheme for monsters to differentiate from player status.
+    /// </summary>
+    /// <param name="monsterName">Monster's display name</param>
+    /// <param name="monsterHealth">Current health (can be 0 or negative if dead)</param>
+    /// <param name="estimatedMaxHealth">Estimated max health for bar calculation</param>
+    public void ShowMonsterStatus(string monsterName, int monsterHealth, int estimatedMaxHealth)
+    {
+        // Clamp health to 0 minimum for display
+        int displayHealth = Math.Max(0, monsterHealth);
+
+        // Generate health bar
+        var healthBar = GenerateHealthBar(displayHealth, estimatedMaxHealth);
+
+        // Color based on remaining health
+        var healthColor = monsterHealth <= 0 ? "dim" : monsterHealth > estimatedMaxHealth / 2 ? "red" : "yellow";
+
+        // Add formatted status to output
+        AddOutput("");
+        if (monsterHealth <= 0)
+        {
+            AddOutput($"[dim]{monsterName}:[/] {Markup.Escape(healthBar)} [red bold]DEFEATED![/]");
+        }
+        else
+        {
+            AddOutput($"[{healthColor}]{monsterName}:[/] {Markup.Escape(healthBar)} [white]{displayHealth} HP remaining[/]");
+        }
+    }
+
+    /// <summary>
     /// Generates an ASCII health bar using = for filled and - for empty.
     /// Example: [=========-----------] for 45% health
     /// </summary>
