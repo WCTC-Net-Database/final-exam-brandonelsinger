@@ -10,14 +10,27 @@ using Spectre.Console;
 namespace ConsoleRpg.Services;
 
 /// <summary>
-/// Handles all admin/developer CRUD operations and advanced queries
-/// Separated from GameEngine to follow Single Responsibility Principle
+/// Service class handling all administrative and CRUD operations.
+/// Provides functionality for managing Characters, Abilities, Rooms, and advanced queries.
+/// 
+/// Feature Groups:
+/// - Basic CRUD: Add, Edit, Display, Search characters
+/// - C-Level: Ability management (add to character, display abilities)
+/// - B-Level: Room management (add room, display room details)
+/// - A-Level: Advanced queries (filter by attribute, world population, equipment search)
+/// 
+/// All operations use Spectre.Console for rich terminal UI and include logging.
 /// </summary>
 public class AdminService
 {
     private readonly GameContext _context;
     private readonly ILogger<AdminService> _logger;
 
+    /// <summary>
+    /// Constructor with dependency injection.
+    /// </summary>
+    /// <param name="context">Database context for entity operations</param>
+    /// <param name="logger">Logger for operation tracking and debugging</param>
     public AdminService(GameContext context, ILogger<AdminService> logger)
     {
         _context = context;
@@ -27,7 +40,9 @@ public class AdminService
     #region Basic CRUD Operations
 
     /// <summary>
-    /// Add a new character to the database
+    /// Creates a new player character and saves to database.
+    /// Prompts for: name, health, experience, and optional starting room.
+    /// Uses Spectre.Console TextPrompt with validation.
     /// </summary>
     public void AddCharacter()
     {
@@ -270,16 +285,15 @@ public class AdminService
     #region C-Level Requirements
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Display a list of existing characters
-    /// - Prompt user to select a character (by ID)
-    /// - Display a list of available abilities from the database
-    /// - Prompt user to select an ability to add
-    /// - Associate the ability with the character using the many-to-many relationship
-    /// - Save changes to the database
-    /// - Display confirmation message with the character name and ability name
-    /// - Log the operation
+    /// C-LEVEL REQUIREMENT: Add Ability to Character
+    /// Allows associating an existing ability with a player character.
+    /// Uses the PlayerAbilities many-to-many join table.
+    /// 
+    /// Process:
+    /// 1. Display list of characters using SelectionPrompt
+    /// 2. Display available abilities from database
+    /// 3. Check for duplicates (prevent adding same ability twice)
+    /// 4. Add ability to player's collection and save
     /// </summary>
     public void AddAbilityToCharacter()
     {
@@ -342,15 +356,15 @@ public class AdminService
     }
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Prompt the user to select a character (by ID or name)
-    /// - Retrieve the character and their abilities from the database (use Include or lazy loading)
-    /// - Display the character's name and basic info
-    /// - Display all abilities associated with that character in a formatted table
-    /// - For each ability, show: Name, Description, and any other relevant properties (e.g., Damage, Distance for ShoveAbility)
-    /// - Handle the case where the character has no abilities
-    /// - Log the operation
+    /// C-LEVEL REQUIREMENT: Display Character Abilities
+    /// Shows all abilities learned by a selected character.
+    /// Uses .Include(p => p.Abilities) for eager loading.
+    /// 
+    /// Displays ability-specific stats based on type:
+    /// - ShoveAbility: Damage and Distance
+    /// - FireballAbility: Damage and Distance
+    /// - HealAbility: Heal amount
+    /// - CombatAbility: Bonus damage
     /// </summary>
     public void DisplayCharacterAbilities()
     {
@@ -436,15 +450,17 @@ public class AdminService
     #region B-Level Requirements
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Prompt user for room name
-    /// - Prompt user for room description
-    /// - Optionally prompt for navigation (which rooms connect in which directions)
-    /// - Create a new Room entity
-    /// - Save to the database
-    /// - Display confirmation with room details
-    /// - Log the operation
+    /// B-LEVEL REQUIREMENT: Add New Room
+    /// Creates a new room and connects it to an existing room.
+    /// Automatically sets up bidirectional navigation (new room connects back).
+    /// 
+    /// Process:
+    /// 1. Prompt for room name and description
+    /// 2. Select existing room to connect FROM
+    /// 3. Choose direction (North, South, East, West)
+    /// 4. Calculate X/Y coordinates based on source room
+    /// 5. Optionally add a monster to the new room
+    /// 6. Optionally move a character to the new room
     /// </summary>
     public void AddRoom()
     {
@@ -606,16 +622,17 @@ public class AdminService
     }
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Display a list of all rooms
-    /// - Prompt user to select a room (by ID or name)
-    /// - Retrieve room from database with related data (Include Players and Monsters)
-    /// - Display room name, description, and exits
-    /// - Display list of all players in the room (or message if none)
-    /// - Display list of all monsters in the room (or message if none)
-    /// - Handle case where room is empty gracefully
-    /// - Log the operation
+    /// B-LEVEL REQUIREMENT: Display Room Details
+    /// Shows comprehensive information about a selected room.
+    /// Uses multiple .Include() calls to load related data.
+    /// 
+    /// Displays:
+    /// - Room name and description
+    /// - Available exits (North/South/East/West with destination names)
+    /// - Players currently in the room
+    /// - Monsters currently in the room
+    /// 
+    /// Uses Spectre.Console Grid and Panel for formatting.
     /// </summary>
     public void DisplayRoomDetails()
     {
@@ -706,16 +723,16 @@ public class AdminService
     #region A-Level Requirements
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Display list of all rooms
-    /// - Prompt user to select a room
-    /// - Display a menu of attributes to filter by (Health, Name, Experience, etc.)
-    /// - Prompt user for filter criteria
-    /// - Query the database for characters in that room matching the criteria
-    /// - Display matching characters with relevant details in a formatted table
-    /// - Handle case where no characters match
-    /// - Log the operation
+    /// A-LEVEL REQUIREMENT: List Characters in Room by Attribute
+    /// Filters characters in a specific room by a chosen attribute threshold.
+    /// 
+    /// Process:
+    /// 1. Select a room from the list
+    /// 2. Choose filter attribute (Level, Health, Experience)
+    /// 3. Enter threshold value
+    /// 4. Query: WHERE RoomId = X AND Attribute >= threshold
+    /// 
+    /// Uses LINQ AsQueryable() for dynamic filtering.
     /// </summary>
     public void ListCharactersInRoomByAttribute()
     {
@@ -805,16 +822,15 @@ public class AdminService
     }
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Query database for all rooms
-    /// - For each room, retrieve all characters (Players) in that room
-    /// - Display in a formatted list grouped by room
-    /// - Show room name and description
-    /// - Under each room, list all characters with their details
-    /// - Handle rooms with no characters gracefully
-    /// - Consider using Spectre.Console panels or tables for nice formatting
-    /// - Log the operation
+    /// A-LEVEL REQUIREMENT: List All Rooms with Characters
+    /// Displays a world population report showing all inhabited rooms.
+    /// 
+    /// Query: Rooms with .Include(r => r.Players).Include(r => r.Monsters)
+    /// Filter: Only rooms that have at least one player OR monster
+    /// 
+    /// Uses Spectre.Console Tree for hierarchical display:
+    /// - Room names as parent nodes
+    /// - Players and Monsters as child nodes with HP
     /// </summary>
     public void ListAllRoomsWithCharacters()
     {
@@ -873,18 +889,16 @@ public class AdminService
     }
 
     /// <summary>
-    /// TODO: Implement this method
-    /// Requirements:
-    /// - Prompt user for equipment/item name to search for
-    /// - Query the database to find which character has this equipment
-    /// - Use Include to load Equipment -> Weapon/Armor -> Item
-    /// - Also load the character's Room information
-    /// - Display the character's name who has the equipment
-    /// - Display the room/location where the character is located
-    /// - Handle case where equipment is not found
-    /// - Handle case where equipment exists but isn't equipped by anyone
-    /// - Use Spectre.Console for nice formatting
-    /// - Log the operation
+    /// A-LEVEL REQUIREMENT: Find Equipment Location
+    /// Searches for players who have a specific item equipped.
+    /// 
+    /// Query uses multiple Include/ThenInclude:
+    /// - Players -> Equipment -> Weapon
+    /// - Players -> Equipment -> Armor
+    /// - Players -> Room
+    /// 
+    /// Searches both weapon and armor names using Contains().
+    /// Displays: Character name, Item found, Room location
     /// </summary>
     public void FindEquipmentLocation()
     {

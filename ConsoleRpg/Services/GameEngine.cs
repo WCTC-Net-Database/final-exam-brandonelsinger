@@ -10,8 +10,14 @@ using Spectre.Console;
 
 namespace ConsoleRpg.Services;
 
+/// <summary>
+/// Core game engine that manages the main game loop and mode switching.
+/// Operates in two modes: Exploration (gameplay) and Admin (CRUD operations).
+/// Coordinates between UI components and service layers.
+/// </summary>
 public class GameEngine
 {
+    // ===== Dependencies (injected via DI) =====
     private readonly GameContext _context;
     private readonly MenuManager _menuManager;
     private readonly MapManager _mapManager;
@@ -20,10 +26,14 @@ public class GameEngine
     private readonly AdminService _adminService;
     private readonly ILogger<GameEngine> _logger;
 
-    private Player _currentPlayer;
-    private Room _currentRoom;
-    private GameMode _currentMode = GameMode.Exploration;
+    // ===== Game State =====
+    private Player _currentPlayer; // The active player character
+    private Room _currentRoom; // The room the player is currently in
+    private GameMode _currentMode = GameMode.Exploration; // Current game mode
 
+    /// <summary>
+    /// Constructor with dependency injection for all required services.
+    /// </summary>
     public GameEngine(GameContext context, MenuManager menuManager, MapManager mapManager,
                      ExplorationUI explorationUI, PlayerService playerService,
                      AdminService adminService, ILogger<GameEngine> logger)
@@ -37,6 +47,10 @@ public class GameEngine
         _logger = logger;
     }
 
+    /// <summary>
+    /// Main entry point - initializes the game and runs the main loop.
+    /// Continuously alternates between Exploration and Admin modes based on user input.
+    /// </summary>
     public void Run()
     {
         _logger.LogInformation("Game engine started");
@@ -406,6 +420,9 @@ public class GameEngine
 
     #region Helper Methods
 
+    /// <summary>
+    /// Displays a "press any key" prompt and waits for user input.
+    /// </summary>
     private void PressAnyKey()
     {
         AnsiConsole.WriteLine();
@@ -417,10 +434,12 @@ public class GameEngine
 }
 
 /// <summary>
-/// Represents the current game mode
+/// Represents the current game mode.
+/// Exploration = Active gameplay with movement and combat.
+/// Admin = CRUD operations and database management.
 /// </summary>
 public enum GameMode
 {
-    Exploration,
-    Admin
+    Exploration, // Active gameplay - exploring rooms, fighting monsters
+    Admin // Admin menu - database CRUD operations
 }

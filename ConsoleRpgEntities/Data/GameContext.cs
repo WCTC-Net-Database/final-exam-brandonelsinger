@@ -7,22 +7,42 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ConsoleRpgEntities.Data
 {
+    /// <summary>
+    /// Entity Framework Core database context for the RPG game.
+    /// Configures all entity relationships, TPH inheritance, and cascade behaviors.
+    /// </summary>
     public class GameContext : DbContext
     {
+        // ===== DbSets - Database Tables =====
+        // Player characters table
         public DbSet<Player> Players { get; set; }
+
+        // Monsters table (TPH inheritance - all monster types in one table)
         public DbSet<Monster> Monsters { get; set; }
+
+        // Abilities table (TPH inheritance - all ability types in one table)
         public DbSet<Ability> Abilities { get; set; }
+
+        // Items table (weapons, armor, loot)
         public DbSet<Item> Items { get; set; }
+
+        // Equipment slots linking players to their gear
         public DbSet<Equipment> Equipments { get; set; }
+
+        // Rooms/locations in the game world
         public DbSet<Room> Rooms { get; set; }
 
         public GameContext(DbContextOptions<GameContext> options) : base(options)
         {
         }
 
+        /// <summary>
+        /// Configures entity relationships, inheritance mappings, and constraints.
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Optional: keep TPH discriminator mappings if you want explicit discriminator values
+            // ===== TPH Inheritance for Monsters =====
+            // All monster types stored in single table with MonsterType discriminator
             modelBuilder.Entity<Monster>()
                 .HasDiscriminator<string>(m => m.MonsterType)
                 .HasValue<Goblin>("Goblin")
@@ -30,6 +50,8 @@ namespace ConsoleRpgEntities.Data
                 .HasValue<Undead>("Undead")   
                 .HasValue<Bandit>("Bandit");
 
+            // ===== TPH Inheritance for Abilities =====
+            // All ability types stored in single table with AbilityType discriminator
             modelBuilder.Entity<Ability>()
                 .HasDiscriminator<string>(pa => pa.AbilityType)
                 .HasValue<ShoveAbility>("ShoveAbility")
@@ -37,13 +59,15 @@ namespace ConsoleRpgEntities.Data
                 .HasValue<HealAbility>("HealAbility")
                 .HasValue<CombatAbility>("CombatAbility");
 
-            // Keep Player<->Ability join-table name if you must preserve existing schema
+            // ===== Player-Ability Many-to-Many =====
+            // Creates PlayerAbilities join table
             modelBuilder.Entity<Player>()
                 .HasMany(p => p.Abilities)
                 .WithMany(a => a.Players)
                 .UsingEntity(j => j.ToTable("PlayerAbilities"));
 
-            // Configure Room relationships with Players and Monsters (can be inferred, but explicit is fine)
+            // ===== Room-Player Relationship =====
+            // Players belong to rooms, restrict delete to prevent orphaned players
             modelBuilder.Entity<Room>()
                 .HasMany(r => r.Players)
                 .WithOne(p => p.Room)
@@ -51,6 +75,8 @@ namespace ConsoleRpgEntities.Data
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
 
+            // ===== Room-Monster Relationship =====
+            // Monsters belong to rooms, restrict delete to prevent orphaned monsters
             modelBuilder.Entity<Room>()
                 .HasMany(r => r.Monsters)
                 .WithOne(m => m.Room)
@@ -58,8 +84,9 @@ namespace ConsoleRpgEntities.Data
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
 
-            // IMPORTANT: explicit configuration for multiple self-referencing Room relationships.
-            // EF Core needs each relationship disambiguated because they use the same CLR type.
+            // ===== Room Self-Referencing Navigation =====
+            // Rooms connect to other rooms in four directions
+            // Each relationship needs explicit configuration due to multiple self-references
             modelBuilder.Entity<Room>()
                 .HasOne(r => r.NorthRoom)
                 .WithMany()
@@ -88,15 +115,17 @@ namespace ConsoleRpgEntities.Data
                 .OnDelete(DeleteBehavior.Restrict)
                 .IsRequired(false);
 
-            // Equipment -> Item relations (keep to avoid multiple cascade paths)
+            // ===== Equipment Relationships =====
             ConfigureEquipmentRelationships(modelBuilder);
 
+            // ===== Player-Inventory One-to-One =====
             modelBuilder.Entity<Player>()
                 .HasOne(p => p.Inventory)
                 .WithOne(i => i.Player)
                 .HasForeignKey<Inventory>(i => i.PlayerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // ===== Inventory-Items Many-to-Many =====
             modelBuilder.Entity<Inventory>()
                 .HasMany(i => i.Items)
                 .WithMany();
@@ -104,6 +133,10 @@ namespace ConsoleRpgEntities.Data
             base.OnModelCreating(modelBuilder);
         }
 
+        /// <summary>
+        /// Configures Equipment-Item relationships.
+        /// Weapons and armor are optional (nullable foreign keys).
+        /// </summary>
         private void ConfigureEquipmentRelationships(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Equipment>()

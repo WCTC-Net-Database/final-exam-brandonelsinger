@@ -4,18 +4,38 @@ using System.Text;
 
 namespace ConsoleRpg.Helpers
 {
+    /// <summary>
+    /// Manages world map visualization and room detail display.
+    /// Uses Spectre.Console for rich terminal rendering with colors and borders.
+    /// 
+    /// Features:
+    /// - Visual grid map showing all rooms with connections
+    /// - Current location highlighting
+    /// - Monster/Player presence indicators
+    /// - Room detail panels with exits and inhabitants
+    /// - Context-sensitive action menus
+    /// 
+    /// Map Legend:
+    /// - [[@]] = Current location (green)
+    /// - [[M]] = Monster present (red)
+    /// - [[P]] = Player present (cyan)
+    /// - [[■]] = Empty room (blue)
+    /// </summary>
     public class MapManager
     {
         private readonly OutputManager _outputManager;
 
-        public MapManager(OutputManager outputManager)
+        public MapManager()
         {
-            _outputManager = outputManager;
         }
 
         /// <summary>
-        /// Displays a compact visual map of the world using Spectre.Console Layout
+        /// Creates a compact map panel showing all rooms in a grid layout.
+        /// Used in the main exploration UI.
         /// </summary>
+        /// <param name="rooms">All rooms in the world</param>
+        /// <param name="currentRoom">The player's current location</param>
+        /// <returns>A Spectre.Console Panel containing the map</returns>
         public Panel GetCompactMapPanel(IEnumerable<Room> rooms, Room currentRoom)
         {
             if (!rooms.Any())
@@ -39,8 +59,11 @@ namespace ConsoleRpg.Helpers
         }
 
         /// <summary>
-        /// Displays a visual map of the world using Spectre.Console
+        /// Displays a full-screen visual map with legend.
+        /// Used when player selects "View Map" action.
         /// </summary>
+        /// <param name="rooms">All rooms in the world</param>
+        /// <param name="currentRoom">The player's current location</param>
         public void DisplayMap(IEnumerable<Room> rooms, Room currentRoom)
         {
             if (!rooms.Any())

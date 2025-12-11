@@ -4,6 +4,11 @@ using ConsoleRpgEntities.Models.Equipments;
 
 namespace ConsoleRpgEntities.Models.Rooms
 {
+    /// <summary>
+    /// Represents a location in the game world that players can explore.
+    /// Rooms are connected via directional navigation (North, South, East, West).
+    /// Contains collections of players, monsters, and items present in the room.
+    /// </summary>
     public class Room : IRoom
     {
         public int Id { get; set; }

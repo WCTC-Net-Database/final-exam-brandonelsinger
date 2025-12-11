@@ -2,7 +2,11 @@
 
 namespace ConsoleRpgEntities.Models.Equipments;
 
-
+/// <summary>
+/// Represents a weapon, armor, or other item in the game.
+/// Items can be equipped (via Equipment) or stored in inventory.
+/// The Type property determines if it's a "Weapon" or "Armor".
+/// </summary>
 public class Item
 {
     public int Id { get; set; }

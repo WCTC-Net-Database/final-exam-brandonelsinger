@@ -1,5 +1,9 @@
 namespace ConsoleRpgEntities.Models.Rooms
 {
+    /// <summary>
+    /// Interface defining core room properties.
+    /// Used for type constraints and polymorphic room handling.
+    /// </summary>
     public interface IRoom
     {
         int Id { get; set; }

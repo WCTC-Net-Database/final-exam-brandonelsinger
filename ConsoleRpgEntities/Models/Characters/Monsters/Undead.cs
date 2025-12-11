@@ -1,14 +1,18 @@
 ﻿using ConsoleRpgEntities.Models.Attributes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ConsoleRpgEntities.Models.Characters.Monsters
 {
+    /// <summary>
+    /// Undead monster type - reanimated creatures dealing necrotic damage.
+    /// Deals standard aggression-based damage with a chilling touch.
+    /// </summary>
     public class Undead : Monster
     {
+        /// <summary>
+        /// Undead attack - bone-chilling necrotic touch attack.
+        /// </summary>
+        /// <param name="target">The entity being attacked</param>
+        /// <returns>Combat log message describing the necrotic attack</returns>
         public override string Attack(ITargetable target)
         {
             int damage = AggressionLevel;
